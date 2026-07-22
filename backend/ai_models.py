@@ -105,6 +105,27 @@ class AIAnalysis:
 
     response: AIResponse
 
+# ============================================================
+# Prompt Context
+# ============================================================
+
+@dataclass(
+    slots=True,
+    frozen=True,
+)
+class PromptContext:
+
+    repository: RepositoryProfile
+
+    commits: list[CommitProfile]
+
+    pull_requests: list[PullRequestProfile]
+
+    issues: list[IssueProfile]
+
+    developers: list[DeveloperProfile]
+
+    health: HealthReport
 
 # ============================================================
 # AI Inference
@@ -200,52 +221,266 @@ class AIInference:
 # Prompt Builders
 # ============================================================
 
+# ============================================================
+# Prompt Helpers
+# ============================================================
+
+SECTION_SEPARATOR = "\n\n"
+
+TASK_PROMPT = """
+Task
+
+Produce a professional engineering review.
+
+The backend has already completed the technical analysis.
+
+Your responsibility is to explain the supplied evidence.
+
+Repository Purpose
+
+Begin the Repository Overview by explaining what the repository is designed to do.
+
+Use the supplied repository description as the primary source.
+
+You may naturally summarize or rephrase the description.
+
+Do not invent additional functionality.
+
+If no repository description exists, explicitly state that the repository purpose could not be be determined from the available evidence.
+
+Report Structure
+
+1. Executive Summary
+
+2. Repository Overview
+
+3. Development Analysis
+
+4. Repository Health
+
+5. Engineering Strengths
+
+6. Engineering Weaknesses
+
+7. Engineering Recommendations
+
+Writing Rules
+
+• Base every statement on supplied evidence.
+
+• Never speculate.
+
+• Never invent repository features.
+
+• Never infer developer intent.
+
+• Never infer commit purpose.
+
+• Respect the repository type.
+
+• Ignore Not Applicable metrics.
+
+• Explain why scores were assigned.
+
+• Explain confidence.
+
+• Keep recommendations specific.
+
+• If no improvement is justified, explicitly state that current engineering practices should be maintained.
+
+Tone
+
+Write like a senior software architect reviewing a production codebase.
+
+Be concise.
+
+Avoid repetition.
+
+Avoid generic advice.
+
+Interpret backend findings.
+
+Do not reinterpret backend scoring logic.
+
+Do not justify a score using assumptions that were not explicitly supplied.
+""".strip()
+
+def section(
+    title: str,
+    body: str,
+) -> str:
+    """
+    Creates a consistently formatted prompt section.
+    """
+
+    return f"""
+{title}
+{'=' * len(title)}
+
+{body.strip()}
+""".strip()
+
+
+def bullet_list(
+    items: list[str],
+    empty: str = "None",
+) -> str:
+    """
+    Formats a list as bullet points.
+    """
+
+    if not items:
+        return empty
+
+    return "\n".join(
+
+        f"• {item}"
+
+        for item in items
+
+    )
+
+
+def kv(
+    **values: object,
+) -> str:
+    """
+    Formats key-value pairs.
+
+    Example
+
+    Name: Orzyn
+    Stars: 12
+    """
+
+    return "\n".join(
+
+        f"{key}: {value}"
+
+        for key, value in values.items()
+
+    )
+
 def build_system_prompt() -> str:
 
     return """
 You are Orzyn AI.
 
-You are a senior software architect and code reviewer.
+You are a Senior Software Architect performing an engineering review.
 
-Base every conclusion ONLY on the supplied repository data.
+The backend has already analyzed the repository.
 
-Do not invent information.
+The backend computed all engineering metrics.
 
-If evidence is missing, explicitly say so.
+Your job is to explain them.
 
-Provide concise, technical, actionable feedback.
+Do NOT recompute scores.
 
-Never hallucinate repository features.
+Do NOT infer technologies, files, architecture, testing, CI/CD, documentation or engineering practices that were not supplied.
+
+The repository description, homepage, repository name, and all backend-computed metrics are trusted evidence.
+
+You may summarize or rephrase this information naturally.
+
+Do not invent functionality beyond the supplied evidence.
+
+Never speculate.
+
+Never guess.
+
+Never fabricate.
+
+Always separate:
+
+• Evidence
+• Observation
+• Recommendation
+
+Repository Type matters.
+
+For Personal repositories:
+
+- Do not recommend Git Flow.
+- Do not recommend pull requests.
+- Do not recommend multiple contributors.
+- Do not recommend issue tracking unless backend evidence supports it.
+- Treat Not Applicable metrics as neutral, never negative.
+
+Commit Analysis Rules
+
+- Never infer the purpose of a commit.
+- Never infer developer intent.
+- Never infer project history.
+- Never infer architecture changes.
+- Never infer feature additions.
+- Never infer refactoring.
+
+Discuss only measurable facts supplied by the backend.
+
+If a commit is unusually large, simply state its measured size and explain how large commits generally affect maintainability without assuming why they occurred.
+
+Health Score Rules
+
+- Explain why the backend assigned the score.
+- Do not reinterpret backend scores.
+- Do not contradict backend findings.
+
+Recommendations
+
+Recommendations must originate from supplied evidence.
+
+Avoid generic GitHub advice.
+
+If insufficient evidence exists, explicitly state that no recommendation is necessary.
 """.strip()
 
 
 def build_repository_prompt(
-    repository: RepositoryProfile,
+    context: PromptContext,
 ) -> str:
 
     active_repo = get_active_repository()
 
-    return f"""
-Repository
+    repository = context.repository
 
-Name: {repository.name}
-Owner: {active_repo.owner}
-Description: {repository.description or "None"}
+    return section(
 
-Language: {repository.primary_language or "Unknown"}
-Visibility: {repository.visibility}
+        "Repository",
 
-Stars: {repository.stars}
-Forks: {repository.forks}
-Watchers: {repository.watchers}
+        kv(
 
-Default Branch: {repository.default_branch}
-""".strip()
+            Name=repository.name,
+
+            Owner=active_repo.owner,
+
+            Description=repository.description or "None",
+
+            Primary_Language=repository.primary_language or "Unknown",
+
+            Visibility=repository.visibility,
+
+            Homepage=repository.homepage or "None",
+
+            Stars=repository.stars,
+
+            Forks=repository.forks,
+
+            Watchers=repository.watchers,
+
+            Default_Branch=repository.default_branch,
+
+            Repository_Type=context.health.repository_type.value,
+
+        ),
+
+    )
 
 
 def build_commit_prompt(
-    commits: list[CommitProfile],
+    context: PromptContext,
 ) -> str:
+
+    commits = context.commits
 
     if not commits:
 
@@ -277,28 +512,45 @@ No commit history available.
 
     )
 
-    return f"""
-Development
+    average = total_changes / len(commits)
 
-Commits: {len(commits)}
+    largest_commit_size = (
 
-Total Changes: {total_changes}
+        largest_commit.additions +
 
-Largest Commit
+        largest_commit.deletions
 
-Message: {largest_commit.message}
+    )
 
-Changed Lines:
+    return section(
 
-{largest_commit.additions + largest_commit.deletions}
-""".strip()
+        "Development",
 
+        kv(
+
+            Commits=len(commits),
+
+            Total_Changes=total_changes,
+
+            Average_Commit_Size=f"{average:.1f} changed lines",
+
+            Largest_Commit=largest_commit.message,
+
+            Largest_Commit_Size=f"{largest_commit_size} changed lines",
+
+        ),
+
+    )
 
 def build_collaboration_prompt(
-    developers: list[DeveloperProfile],
-    pull_requests: list[PullRequestProfile],
-    issues: list[IssueProfile],
+        context: PromptContext,
 ) -> str:
+
+    developers = context.developers
+
+    pull_requests = context.pull_requests
+
+    issues = context.issues
 
     merged_prs = sum(
 
@@ -316,138 +568,161 @@ def build_collaboration_prompt(
 
     )
 
-    return f"""
-Collaboration
+    return section(
 
-Contributors: {len(developers)}
+        "Collaboration",
 
-Pull Requests: {len(pull_requests)}
+        kv(
 
-Merged Pull Requests: {merged_prs}
+            Contributors=len(developers),
 
-Issues: {len(issues)}
+            Pull_Requests=len(pull_requests),
 
-Closed Issues: {closed_issues}
-""".strip()
+            Merged_Pull_Requests=merged_prs,
 
+            Issues=len(issues),
+
+            Closed_Issues=closed_issues,
+
+        ),
+
+    )
 
 def build_health_prompt(
-    report: HealthReport,
+    context: PromptContext,
 ) -> str:
 
-    categories = "\n".join(
+    report = context.health
 
-        f"- {category.name}: {category.score:.1f}"
+    category_blocks = []
 
-        for category in report.categories
+    for category in report.categories:
+
+        metric_lines = []
+
+        for metric in category.metrics:
+
+            metric_lines.append(
+
+                f"""\
+• {metric.name}
+  Score: {metric.score:.1f}
+  Status: {metric.status.value}
+  Explanation: {metric.explanation}
+"""
+
+            )
+
+        category_blocks.append(
+
+            f"""
+{category.name}
+
+Category Score:
+{category.score:.1f}
+
+{chr(10).join(metric_lines)}
+""".strip()
+
+        )
+
+    strengths = bullet_list(
+
+        report.strengths,
 
     )
 
-    strengths = "\n".join(
+    weaknesses = bullet_list(
 
-        f"- {strength}"
-
-        for strength in report.strengths
+        report.weaknesses
 
     )
 
-    recommendations = "\n".join(
+    recommendations = bullet_list(
 
-        f"- {recommendation}"
-
-        for recommendation in report.recommendations
+        report.recommendations
 
     )
 
-    return f"""
-Repository Health
+    return section(
 
-Overall Score: {report.overall_score:.1f}
+    "Repository Health",
 
-Confidence: {report.confidence:.1f}
+    f"""
+Overall Score:
+{report.overall_score:.1f}
+
+Confidence:
+{report.confidence:.1f}
 
 Repository Type:
-
 {report.repository_type.value}
 
-Category Scores
+Repository Classification
 
-{categories}
+This repository was classified by the backend.
+
+Metrics marked Not Applicable were excluded from scoring.
+
+Do not criticize excluded metrics.
+
+Category Analysis
+
+{chr(10).join(category_blocks)}
 
 Strengths
 
 {strengths}
 
+Weaknesses
+
+{weaknesses}
+
 Recommendations
 
 {recommendations}
-""".strip()
+""".strip(),
 
+)
 
+PROMPT_BUILDERS = (
+
+    build_repository_prompt,
+
+    build_commit_prompt,
+
+    build_collaboration_prompt,
+
+    build_health_prompt,
+
+)
 # ============================================================
 # User Prompt
 # ============================================================
 
 def build_user_prompt(
-    repository: RepositoryProfile,
-    commits: list[CommitProfile],
-    pull_requests: list[PullRequestProfile],
-    issues: list[IssueProfile],
-    developers: list[DeveloperProfile],
-    health: HealthReport,
+        context: PromptContext,
 ) -> str:
 
     sections = [
 
-        build_repository_prompt(
-            repository,
-        ),
+        builder(context)
 
-        build_commit_prompt(
-            commits,
-        ),
-
-        build_collaboration_prompt(
-            developers,
-            pull_requests,
-            issues,
-        ),
-
-        build_health_prompt(
-            health,
-        ),
-
-        """
-Task
-
-Write a professional engineering review of this repository.
-
-Structure the report as:
-
-1. Executive Summary
-
-2. Repository Overview
-
-3. Development Activity
-
-4. Collaboration
-
-5. Strengths
-
-6. Weaknesses
-
-7. Recommendations
-
-Only reference the supplied repository information.
-
-Do not invent facts.
-
-State when information is unavailable.
-""".strip(),
+        for builder in PROMPT_BUILDERS
 
     ]
 
-    return "\n\n".join(sections)
+    sections.append(
+
+        TASK_PROMPT,
+
+    )
+
+    return SECTION_SEPARATOR.join(
+
+        sections,
+
+    )
 
 # ============================================================
 # Repository Analysis
@@ -506,20 +781,24 @@ def analyze_repository(
 
     )
 
+    context = PromptContext(
+
+        repository=repository,
+
+        commits=commits,
+
+        pull_requests=pull_requests,
+
+        issues=issues,
+
+        developers=developers,
+
+        health=health,
+
+)
+
     prompt = build_user_prompt(
-
-        repository,
-
-        commits,
-
-        pull_requests,
-
-        issues,
-
-        developers,
-
-        health,
-
+        context,
     )
 
     inference = AIInference(
@@ -560,7 +839,6 @@ def analyze_repository(
 
     )
 
-
 # ============================================================
 # Public API
 # ============================================================
@@ -586,5 +864,9 @@ __all__ = [
     "build_user_prompt",
 
     "analyze_repository",
+
+    "PromptContext",
+
+    "TASK_PROMPT",
 
 ]
