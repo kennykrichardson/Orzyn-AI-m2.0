@@ -1,20 +1,20 @@
 """
 ============================================================
-ORZYN AI m2.0
+ORZYN AI m3.0
 Repository Health Engine
 ============================================================
 
 Purpose
 -------
-Evaluate the engineering health of GitHub repositories.
+Produce deterministic, explainable engineering health scores.
 
-Design Goals
-------------
-• Explainable scoring
-• Rubric based
-• Context aware
-• Confidence aware
-• Backend friendly
+Design Principles
+-----------------
+• Deterministic
+• Explainable
+• Context-aware
+• Repository-type aware
+• AI-independent
 """
 
 from __future__ import annotations
@@ -24,11 +24,12 @@ from enum import Enum
 
 import pandas as pd
 
-from backend.commits import CommitProfile
-from backend.developer import DeveloperProfile
-from backend.issues import IssueProfile
-from backend.pull_requests import PullRequestProfile
 from backend.repository import RepositoryProfile
+from backend.commits import CommitProfile
+from backend.pull_requests import PullRequestProfile
+from backend.issues import IssueProfile
+from backend.developer import DeveloperProfile
+
 
 # ============================================================
 # Repository Types
@@ -46,6 +47,9 @@ class RepositoryType(Enum):
 
     RESEARCH = "Research"
 
+    UNKNOWN = "Unknown"
+
+
 # ============================================================
 # Metric Status
 # ============================================================
@@ -54,18 +58,16 @@ class MetricStatus(Enum):
 
     AVAILABLE = "Available"
 
+    NOT_APPLICABLE = "Not Applicable"
+
     MISSING = "Missing"
 
-    NOT_APPLICABLE = "Not Applicable"
 
 # ============================================================
 # Metric
 # ============================================================
 
-@dataclass(
-    slots=True,
-    frozen=True,
-)
+@dataclass(slots=True)
 class Metric:
 
     name: str
@@ -80,26 +82,34 @@ class Metric:
 
     evidence: list[str]
 
+    recommendation: str | None = None
+
+    @property
+    def score(self) -> float:
+
+        if self.possible == 0:
+            return 100.0
+
+        return (self.earned / self.possible) * 100
+
+
 # ============================================================
 # Category
 # ============================================================
 
-@dataclass(
-    slots=True,
-    frozen=True,
-)
+@dataclass(slots=True)
 class Category:
 
     name: str
 
-    rubric_weight: float
-
-    metrics: list[Metric]
+    weight: float
 
     explanation: str
 
+    metrics: list[Metric]
+
     @property
-    def earned(self) -> float:
+    def earned(self):
 
         return sum(
 
@@ -112,7 +122,7 @@ class Category:
         )
 
     @property
-    def possible(self) -> float:
+    def possible(self):
 
         return sum(
 
@@ -125,11 +135,10 @@ class Category:
         )
 
     @property
-    def score(self) -> float:
+    def score(self):
 
         if self.possible == 0:
-
-            return 0.0
+            return 100.0
 
         return (
 
@@ -140,15 +149,13 @@ class Category:
             self.possible
 
         ) * 100
-    
+
+
 # ============================================================
 # Health Report
 # ============================================================
 
-@dataclass(
-    slots=True,
-    frozen=True,
-)
+@dataclass(slots=True)
 class HealthReport:
 
     repository: RepositoryProfile
@@ -163,7 +170,98 @@ class HealthReport:
 
     strengths: list[str]
 
+    weaknesses: list[str]
+
     recommendations: list[str]
+
+
+# ============================================================
+# Repository Rubrics
+# ============================================================
+
+RUBRICS = {
+
+    RepositoryType.PERSONAL: {
+
+        "Repository": 35,
+
+        "Development": 40,
+
+        "Architecture": 15,
+
+        "Community": 5,
+
+        "Collaboration": 0,
+
+        "Issues": 5,
+
+    },
+
+    RepositoryType.STUDENT: {
+
+        "Repository": 30,
+
+        "Development": 40,
+
+        "Architecture": 15,
+
+        "Community": 5,
+
+        "Collaboration": 5,
+
+        "Issues": 5,
+
+    },
+
+    RepositoryType.OPEN_SOURCE: {
+
+        "Repository": 20,
+
+        "Development": 25,
+
+        "Architecture": 15,
+
+        "Community": 15,
+
+        "Collaboration": 15,
+
+        "Issues": 10,
+
+    },
+
+    RepositoryType.ENTERPRISE: {
+
+        "Repository": 20,
+
+        "Development": 20,
+
+        "Architecture": 20,
+
+        "Community": 10,
+
+        "Collaboration": 20,
+
+        "Issues": 10,
+
+    },
+
+    RepositoryType.RESEARCH: {
+
+        "Repository": 30,
+
+        "Development": 35,
+
+        "Architecture": 20,
+
+        "Community": 5,
+
+        "Collaboration": 5,
+
+        "Issues": 5,
+
+    },
+
+}
 
 # ============================================================
 # Helpers
@@ -190,8 +288,7 @@ def percentage(
 ) -> float:
 
     if possible <= 0:
-
-        return 0.0
+        return 100.0
 
     return (
 
@@ -211,6 +308,7 @@ def create_metric(
     explanation: str,
     status: MetricStatus = MetricStatus.AVAILABLE,
     evidence: list[str] | None = None,
+    recommendation: str | None = None,
 ) -> Metric:
 
     return Metric(
@@ -227,6 +325,8 @@ def create_metric(
 
         evidence=evidence or [],
 
+        recommendation=recommendation,
+
     )
 
 
@@ -234,11 +334,42 @@ def create_metric(
 # Repository Classification
 # ============================================================
 
+PERSONAL_KEYWORDS = {
+
+    "portfolio",
+    "resume",
+    "website",
+    "personal",
+    "cv",
+
+}
+
+STUDENT_KEYWORDS = {
+
+    "assignment",
+    "college",
+    "lab",
+    "project",
+    "semester",
+
+}
+
+
 def classify_repository(
     repository: RepositoryProfile,
     commits: list[CommitProfile],
     developers: list[DeveloperProfile],
 ) -> RepositoryType:
+
+    name = repository.name.lower()
+
+    description = (
+
+        repository.description or ""
+
+    ).lower()
+
+    text = f"{name} {description}"
 
     contributors = len(developers)
 
@@ -248,49 +379,37 @@ def classify_repository(
 
     forks = repository.forks
 
-    if (
+    # --------------------------------------------------------
+    # Personal Portfolio
+    # --------------------------------------------------------
 
-        contributors <= 2
+    if any(
 
-        and
+        keyword in text
 
-        stars <= 10
-
-        and
-
-        forks <= 2
+        for keyword in PERSONAL_KEYWORDS
 
     ):
 
         return RepositoryType.PERSONAL
 
-    if (
+    # --------------------------------------------------------
+    # Student Project
+    # --------------------------------------------------------
 
-        contributors <= 5
+    if any(
 
-        and
+        keyword in text
 
-        stars <= 50
-
-        and
-
-        commit_count <= 500
+        for keyword in STUDENT_KEYWORDS
 
     ):
 
         return RepositoryType.STUDENT
 
-    if (
-
-        contributors >= 25
-
-        and
-
-        stars >= 500
-
-    ):
-
-        return RepositoryType.ENTERPRISE
+    # --------------------------------------------------------
+    # Large Open Source
+    # --------------------------------------------------------
 
     if (
 
@@ -298,96 +417,44 @@ def classify_repository(
 
         or
 
-        stars >= 250
+        stars >= 100
 
         or
 
-        forks >= 50
+        forks >= 25
 
     ):
 
         return RepositoryType.OPEN_SOURCE
 
+    # --------------------------------------------------------
+    # Enterprise
+    # --------------------------------------------------------
+
+    if (
+
+        contributors >= 50
+
+        and
+
+        commit_count >= 1000
+
+    ):
+
+        return RepositoryType.ENTERPRISE
+
+    # --------------------------------------------------------
+    # Default Personal
+
+    # One maintainer should NEVER be penalized.
+
+    # --------------------------------------------------------
+
+    if contributors <= 2:
+
+        return RepositoryType.PERSONAL
+
     return RepositoryType.RESEARCH
-
-
-# ============================================================
-# Rubrics
-# ============================================================
-
-RUBRICS = {
-
-    RepositoryType.PERSONAL: {
-
-        "Repository": 30,
-
-        "Development": 35,
-
-        "Collaboration": 10,
-
-        "Issues": 10,
-
-        "Community": 15,
-
-    },
-
-    RepositoryType.STUDENT: {
-
-        "Repository": 30,
-
-        "Development": 35,
-
-        "Collaboration": 15,
-
-        "Issues": 10,
-
-        "Community": 10,
-
-    },
-
-    RepositoryType.OPEN_SOURCE: {
-
-        "Repository": 20,
-
-        "Development": 25,
-
-        "Collaboration": 25,
-
-        "Issues": 20,
-
-        "Community": 10,
-
-    },
-
-    RepositoryType.ENTERPRISE: {
-
-        "Repository": 20,
-
-        "Development": 20,
-
-        "Collaboration": 25,
-
-        "Issues": 20,
-
-        "Community": 15,
-
-    },
-
-    RepositoryType.RESEARCH: {
-
-        "Repository": 25,
-
-        "Development": 35,
-
-        "Collaboration": 10,
-
-        "Issues": 10,
-
-        "Community": 20,
-
-    },
-
-}
 
 
 # ============================================================
@@ -395,8 +462,8 @@ RUBRICS = {
 # ============================================================
 
 def create_category(
-    name: str,
     repository_type: RepositoryType,
+    name: str,
     metrics: list[Metric],
     explanation: str,
 ) -> Category:
@@ -405,11 +472,11 @@ def create_category(
 
         name=name,
 
-        rubric_weight=RUBRICS[repository_type][name],
-
-        metrics=metrics,
+        weight=RUBRICS[repository_type][name],
 
         explanation=explanation,
+
+        metrics=metrics,
 
     )
 
@@ -422,25 +489,33 @@ def calculate_confidence(
     categories: list[Category],
 ) -> float:
 
-    total_metrics = 0
+    available = 0
 
-    available_metrics = 0
+    total = 0
 
     for category in categories:
 
         for metric in category.metrics:
 
-            total_metrics += 1
+            if metric.status is MetricStatus.NOT_APPLICABLE:
+
+                continue
+
+            total += 1
 
             if metric.status is MetricStatus.AVAILABLE:
 
-                available_metrics += 1
+                available += 1
+
+    if total == 0:
+
+        return 100.0
 
     return percentage(
 
-        available_metrics,
+        available,
 
-        total_metrics,
+        total,
 
     )
 
@@ -450,35 +525,40 @@ def calculate_confidence(
 
 def build_repository_metrics(
     repository: RepositoryProfile,
+    repository_type: RepositoryType,
 ) -> list[Metric]:
 
     metrics: list[Metric] = []
+
+    # --------------------------------------------------------
 
     metrics.append(
 
         create_metric(
 
-            name="Description",
+            name="Repository Description",
 
             earned=10 if repository.description else 0,
 
             possible=10,
 
             explanation=(
-                "Repository includes a description."
+                "Repository contains a description."
                 if repository.description
-                else "Repository has no description."
+                else "Repository description is missing."
             ),
 
-            evidence=(
-                [repository.description]
+            recommendation=(
+                None
                 if repository.description
-                else []
+                else "Add a clear repository description."
             ),
 
         )
 
     )
+
+    # --------------------------------------------------------
 
     metrics.append(
 
@@ -493,54 +573,20 @@ def build_repository_metrics(
             explanation=(
                 "Default branch configured."
                 if repository.default_branch
-                else "Default branch unavailable."
+                else "No default branch detected."
             ),
 
-            evidence=(
-                [repository.default_branch]
+            recommendation=(
+                None
                 if repository.default_branch
-                else []
+                else "Configure a default branch."
             ),
 
         )
 
     )
 
-    metrics.append(
-
-        create_metric(
-
-            name="Stars",
-
-            earned=min(repository.stars, 20),
-
-            possible=20,
-
-            explanation=f"{repository.stars} GitHub stars.",
-
-            evidence=[str(repository.stars)],
-
-        )
-
-    )
-
-    metrics.append(
-
-        create_metric(
-
-            name="Forks",
-
-            earned=min(repository.forks, 10),
-
-            possible=10,
-
-            explanation=f"{repository.forks} repository forks.",
-
-            evidence=[str(repository.forks)],
-
-        )
-
-    )
+    # --------------------------------------------------------
 
     metrics.append(
 
@@ -554,11 +600,99 @@ def build_repository_metrics(
 
             explanation=f"Repository is {repository.visibility}.",
 
-            evidence=[repository.visibility],
-
         )
 
     )
+
+    # --------------------------------------------------------
+    # Stars
+    # --------------------------------------------------------
+
+    if repository_type is RepositoryType.OPEN_SOURCE:
+
+        metrics.append(
+
+            create_metric(
+
+                name="Stars",
+
+                earned=min(repository.stars, 20),
+
+                possible=20,
+
+                explanation=f"{repository.stars} GitHub stars.",
+
+                recommendation=(
+                    None
+                    if repository.stars > 0
+                    else "Increase community visibility."
+                ),
+
+            )
+
+        )
+
+    else:
+
+        metrics.append(
+
+            create_metric(
+
+                name="Stars",
+
+                earned=0,
+
+                possible=0,
+
+                explanation="Stars are not used when evaluating personal repositories.",
+
+                status=MetricStatus.NOT_APPLICABLE,
+
+            )
+
+        )
+
+    # --------------------------------------------------------
+    # Forks
+    # --------------------------------------------------------
+
+    if repository_type is RepositoryType.OPEN_SOURCE:
+
+        metrics.append(
+
+            create_metric(
+
+                name="Forks",
+
+                earned=min(repository.forks, 10),
+
+                possible=10,
+
+                explanation=f"{repository.forks} repository forks.",
+
+            )
+
+        )
+
+    else:
+
+        metrics.append(
+
+            create_metric(
+
+                name="Forks",
+
+                earned=0,
+
+                possible=0,
+
+                explanation="Fork count is not relevant for this repository type.",
+
+                status=MetricStatus.NOT_APPLICABLE,
+
+            )
+
+        )
 
     return metrics
 
@@ -577,15 +711,17 @@ def build_development_metrics(
 
             create_metric(
 
-                name="Commit History",
+                "Commit History",
 
-                earned=0,
+                0,
 
-                possible=25,
+                25,
 
-                explanation="No commit history available.",
+                "No commit history available.",
 
                 status=MetricStatus.MISSING,
+
+                recommendation="Commit project changes regularly.",
 
             )
 
@@ -609,57 +745,101 @@ def build_development_metrics(
 
     )
 
+    largest_commit = max(
+
+        commits,
+
+        key=lambda commit:
+
+        commit.additions +
+
+        commit.deletions,
+
+    )
+
     metrics: list[Metric] = []
 
+    # --------------------------------------------------------
+
     metrics.append(
 
         create_metric(
 
-            name="Commit Volume",
+            "Commit Frequency",
 
-            earned=min(commit_count / 10, 10),
+            min(commit_count, 20),
 
-            possible=10,
+            20,
 
-            explanation=f"{commit_count} commits.",
-
-            evidence=[str(commit_count)],
+            f"{commit_count} commits analysed.",
 
         )
 
     )
 
+    # --------------------------------------------------------
+
+    size_score = 20
+
+    recommendation = None
+
+    if average_changes > 800:
+
+        size_score = 8
+
+        recommendation = (
+
+            "Reduce commit size into smaller logical commits."
+
+        )
+
+    elif average_changes > 500:
+
+        size_score = 14
+
+        recommendation = (
+
+            "Prefer smaller commits where practical."
+
+        )
+
     metrics.append(
 
         create_metric(
 
-            name="Commit Size",
+            "Commit Granularity",
 
-            earned=10 if average_changes < 500 else 6,
+            size_score,
 
-            possible=10,
+            20,
 
-            explanation=(
-                f"Average {average_changes:.1f} changed lines."
-            ),
+            f"Average commit changed {average_changes:.0f} lines.",
 
-            evidence=[f"{average_changes:.1f}"],
+            recommendation=recommendation,
 
         )
 
     )
 
+    # --------------------------------------------------------
+
     metrics.append(
 
         create_metric(
 
-            name="History Availability",
+            "Largest Commit",
 
-            earned=5,
+            5 if (
 
-            possible=5,
+                largest_commit.additions +
 
-            explanation="Commit history successfully analyzed.",
+                largest_commit.deletions
+
+            ) < 2500 else 2,
+
+            5,
+
+            f"Largest commit: {largest_commit.message}",
 
         )
 
@@ -673,28 +853,34 @@ def build_development_metrics(
 # ============================================================
 
 def build_collaboration_metrics(
+    repository_type: RepositoryType,
+    developers: list[DeveloperProfile],
     pull_requests: list[PullRequestProfile],
 ) -> list[Metric]:
 
-    if not pull_requests:
+    # Personal repositories
+
+    if repository_type is RepositoryType.PERSONAL:
 
         return [
 
             create_metric(
 
-                name="Pull Requests",
+                "Collaboration",
 
-                earned=0,
+                0,
 
-                possible=0,
+                0,
 
-                explanation="No pull request data available.",
+                "Single-maintainer workflow detected.",
 
                 status=MetricStatus.NOT_APPLICABLE,
 
             )
 
         ]
+
+    total = len(pull_requests)
 
     merged = sum(
 
@@ -704,49 +890,61 @@ def build_collaboration_metrics(
 
     )
 
-    total = len(pull_requests)
+    merge_rate = (
 
-    merge_rate = merged / total
+        merged / total
+
+        if total
+
+        else 0
+
+    )
 
     return [
 
         create_metric(
 
-            name="Merge Rate",
+            "Merge Rate",
 
-            earned=20 * merge_rate,
+            merge_rate * 20,
 
-            possible=20,
+            20,
 
-            explanation=f"{merged}/{total} pull requests merged.",
+            f"{merged}/{total} pull requests merged.",
 
-            evidence=[f"{merge_rate:.2%}"],
-
-        ),
-
-        create_metric(
-
-            name="PR Activity",
-
-            earned=min(total, 10),
-
-            possible=10,
-
-            explanation=f"{total} pull requests.",
-
-            evidence=[str(total)],
-
-        ),
+        )
 
     ]
+
 
 # ============================================================
 # Issue Metrics
 # ============================================================
 
 def build_issue_metrics(
+    repository_type: RepositoryType,
     issues: list[IssueProfile],
 ) -> list[Metric]:
+
+    if repository_type is RepositoryType.PERSONAL:
+
+        return [
+
+            create_metric(
+
+                "Issue Tracking",
+
+                0,
+
+                0,
+
+                "Issue tracking is optional for personal repositories.",
+
+                status=MetricStatus.NOT_APPLICABLE,
+
+            )
+
+        ]
 
     if not issues:
 
@@ -754,15 +952,15 @@ def build_issue_metrics(
 
             create_metric(
 
-                name="Issue Tracking",
+                "Issue Tracking",
 
-                earned=0,
+                0,
 
-                possible=0,
+                10,
 
-                explanation="No issue data available.",
+                "No issues available.",
 
-                status=MetricStatus.NOT_APPLICABLE,
+                recommendation="Use GitHub Issues to track work.",
 
             )
 
@@ -778,37 +976,19 @@ def build_issue_metrics(
 
     total = len(issues)
 
-    closure_rate = closed / total
-
     return [
 
         create_metric(
 
-            name="Issue Resolution",
+            "Issue Resolution",
 
-            earned=20 * closure_rate,
+            (closed / total) * 20,
 
-            possible=20,
+            20,
 
-            explanation=f"{closed}/{total} issues closed.",
+            f"{closed}/{total} issues closed.",
 
-            evidence=[f"{closure_rate:.2%}"],
-
-        ),
-
-        create_metric(
-
-            name="Issue Activity",
-
-            earned=min(total, 10),
-
-            possible=10,
-
-            explanation=f"{total} tracked issues.",
-
-            evidence=[str(total)],
-
-        ),
+        )
 
     ]
 
@@ -818,8 +998,29 @@ def build_issue_metrics(
 # ============================================================
 
 def build_community_metrics(
+    repository_type: RepositoryType,
     developers: list[DeveloperProfile],
 ) -> list[Metric]:
+
+    if repository_type is RepositoryType.PERSONAL:
+
+        return [
+
+            create_metric(
+
+                "Community",
+
+                0,
+
+                0,
+
+                "Community metrics are not evaluated for personal repositories.",
+
+                status=MetricStatus.NOT_APPLICABLE,
+
+            )
+
+        ]
 
     contributors = len(developers)
 
@@ -827,20 +1028,17 @@ def build_community_metrics(
 
         create_metric(
 
-            name="Contributors",
+            "Contributors",
 
-            earned=min(contributors * 2, 20),
+            min(contributors * 2, 20),
 
-            possible=20,
+            20,
 
-            explanation=f"{contributors} contributors.",
-
-            evidence=[str(contributors)],
+            f"{contributors} contributors.",
 
         )
 
     ]
-
 
 # ============================================================
 # Strength Builder
@@ -854,23 +1052,62 @@ def build_strengths(
 
     for category in categories:
 
-        if category.score >= 80:
+        for metric in category.metrics:
 
-            strengths.append(
+            if (
 
-                f"{category.name} is a strong area."
+                metric.status is MetricStatus.AVAILABLE
 
-            )
+                and
+
+                metric.score >= 90
+
+            ):
+
+                strengths.append(metric.explanation)
 
     if not strengths:
 
         strengths.append(
 
-            "No major strengths identified."
+            "Repository contains measurable engineering practices."
 
         )
 
     return strengths
+
+
+# ============================================================
+# Weakness Builder
+# ============================================================
+
+def build_weaknesses(
+    categories: list[Category],
+) -> list[str]:
+
+    weaknesses: list[str] = []
+
+    for category in categories:
+
+        for metric in category.metrics:
+
+            if (
+
+                metric.status is MetricStatus.AVAILABLE
+
+                and
+
+                metric.score < 50
+
+            ):
+
+                weaknesses.append(
+
+                    metric.explanation
+
+                )
+
+    return weaknesses
 
 
 # ============================================================
@@ -885,19 +1122,31 @@ def build_recommendations(
 
     for category in categories:
 
-        if category.score < 50:
+        for metric in category.metrics:
 
-            recommendations.append(
+            if (
 
-                f"Improve {category.name.lower()} practices."
+                metric.recommendation
 
-            )
+                and
+
+                metric.recommendation
+
+                not in recommendations
+
+            ):
+
+                recommendations.append(
+
+                    metric.recommendation
+
+                )
 
     if not recommendations:
 
         recommendations.append(
 
-            "Continue maintaining current engineering quality."
+            "Continue following current engineering practices."
 
         )
 
@@ -930,54 +1179,98 @@ def build_health_report(
 
         create_category(
 
-            "Repository",
-
             repository_type,
 
+            "Repository",
+
             build_repository_metrics(
+
                 repository,
+
+                repository_type,
+
             ),
 
-            "Repository quality.",
+            "Repository metadata and configuration.",
 
         ),
 
         create_category(
+
+            repository_type,
 
             "Development",
 
-            repository_type,
-
             build_development_metrics(
+
                 commits,
+
             ),
 
-            "Development activity.",
+            "Commit history and development practices.",
 
         ),
 
         create_category(
+
+            repository_type,
+
+            "Architecture",
+
+            [
+
+                create_metric(
+
+                    "Architecture",
+
+                    100,
+
+                    100,
+
+                    "Architecture analysis is reserved for source-code inspection.",
+
+                    status=MetricStatus.NOT_APPLICABLE,
+
+                )
+
+            ],
+
+            "Architecture metrics.",
+
+        ),
+
+        create_category(
+
+            repository_type,
 
             "Collaboration",
 
-            repository_type,
-
             build_collaboration_metrics(
+
+                repository_type,
+
+                developers,
+
                 pull_requests,
+
             ),
 
-            "Collaboration quality.",
+            "Collaboration practices.",
 
         ),
 
         create_category(
 
-            "Issues",
-
             repository_type,
 
+            "Issues",
+
             build_issue_metrics(
+
+                repository_type,
+
                 issues,
+
             ),
 
             "Issue management.",
@@ -986,12 +1279,16 @@ def build_health_report(
 
         create_category(
 
-            "Community",
-
             repository_type,
 
+            "Community",
+
             build_community_metrics(
+
+                repository_type,
+
                 developers,
+
             ),
 
             "Community engagement.",
@@ -1000,38 +1297,62 @@ def build_health_report(
 
     ]
 
-    overall_score = 0.0
+    overall = 0.0
+
+    total_weight = 0.0
 
     for category in categories:
 
-        overall_score += (
+        if category.weight == 0:
+
+            continue
+
+        overall += (
 
             category.score
 
             *
 
-            category.rubric_weight
-
-            /
-
-            100
+            category.weight
 
         )
 
-    overall_score = clamp(
-        overall_score,
+        total_weight += category.weight
+
+    overall = (
+
+        overall / total_weight
+
+        if total_weight
+
+        else 100
+
     )
 
+    overall = clamp(overall)
+
     confidence = calculate_confidence(
+
         categories,
+
     )
 
     strengths = build_strengths(
+
         categories,
+
+    )
+
+    weaknesses = build_weaknesses(
+
+        categories,
+
     )
 
     recommendations = build_recommendations(
+
         categories,
+
     )
 
     return HealthReport(
@@ -1040,7 +1361,7 @@ def build_health_report(
 
         repository_type=repository_type,
 
-        overall_score=overall_score,
+        overall_score=overall,
 
         confidence=confidence,
 
@@ -1048,9 +1369,12 @@ def build_health_report(
 
         strengths=strengths,
 
+        weaknesses=weaknesses,
+
         recommendations=recommendations,
 
     )
+
 
 # ============================================================
 # DataFrame
@@ -1072,27 +1396,20 @@ def health_dataframe(
 
                 "Metric": metric.name,
 
-                "Earned": metric.earned,
-
-                "Possible": metric.possible,
-
-                "Score": percentage(
-
-                    metric.earned,
-
-                    metric.possible,
-
-                ),
+                "Score": round(metric.score, 2),
 
                 "Status": metric.status.value,
 
                 "Explanation": metric.explanation,
+
+                "Recommendation": metric.recommendation or "",
 
                 "Evidence": ", ".join(metric.evidence),
 
             })
 
     return pd.DataFrame(rows)
+
 
 # ============================================================
 # Statistics
@@ -1126,7 +1443,9 @@ def health_statistics(
 
         "category_scores": {
 
-            category.name: round(
+            category.name:
+
+            round(
 
                 category.score,
 
@@ -1140,9 +1459,12 @@ def health_statistics(
 
         "strengths": report.strengths,
 
+        "weaknesses": report.weaknesses,
+
         "recommendations": report.recommendations,
 
     }
+
 
 # ============================================================
 # Public API
@@ -1167,4 +1489,3 @@ __all__ = [
     "health_statistics",
 
 ]
-
