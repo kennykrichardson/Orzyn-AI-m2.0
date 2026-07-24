@@ -108,6 +108,14 @@ class AIModelConfig:
 
     endpoint: str | None = None
 
+    temperature: float = 0.2
+
+    top_p: float = 0.9
+
+    max_tokens: int = 4096
+
+    timeout: int = 120
+
 def parse_datetime(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
@@ -181,9 +189,9 @@ ACTIVE_REPOSITORY = RepositoryConfig(
 
     owner="kennykrichardson",
 
-    repository="kennykrichardson-portfolio",
+    repository="GeoTrail",
 
-    url="https://github.com/kennykrichardson/kennykrichardson-portfolio"
+    url="https://github.com/kennykrichardson/GeoTrail"
 
 )
 
@@ -191,7 +199,19 @@ ACTIVE_MODEL = AIModelConfig(
 
     provider="huggingface",
 
-    model=os.getenv("HF_MODEL")
+    model=os.getenv(
+        "HF_MODEL",
+        "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+    ),
+
+    temperature=0.2,
+
+    top_p=0.9,
+
+    max_tokens=4096,
+
+    timeout=120,
+
 )
 
 def set_active_repository(
@@ -214,6 +234,10 @@ def set_active_model(
     provider: str,
     model: str,
     endpoint: str | None = None,
+    temperature: float = 0.2,
+    top_p: float = 0.9,
+    max_tokens: int = 4096,
+    timeout: int = 120,
 ) -> AIModelConfig:
 
     global ACTIVE_MODEL
@@ -222,6 +246,10 @@ def set_active_model(
         provider=provider,
         model=model,
         endpoint=endpoint,
+        temperature=temperature,
+        top_p=top_p,
+        max_tokens=max_tokens,
+        timeout=timeout,
     )
 
     return ACTIVE_MODEL

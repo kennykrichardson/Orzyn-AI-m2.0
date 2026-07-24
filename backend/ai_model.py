@@ -20,7 +20,7 @@ from backend.developer import (
     fetch_developers,
 )
 
-from backend.health_score import (
+from backend. import (
     HealthReport,
     build_health_report,
 )
@@ -238,15 +238,21 @@ Your responsibility is to explain the supplied evidence.
 
 Repository Purpose
 
-Begin the Repository Overview by explaining what the repository is designed to do.
+Begin the Repository Overview with a detailed explanation of the repository's purpose.
 
-Use the supplied repository description as the primary source.
+The Repository Overview should be approximately one well-developed paragraph spanning at least three to five sentences.
 
-You may naturally summarize or rephrase the description.
+Start with the supplied repository description as the primary source of truth.
 
-Do not invent additional functionality.
+Expand naturally using the repository name, primary language, repository type, framework, detected technologies, and other deterministic metadata supplied by the backend.
 
-If no repository description exists, explicitly state that the repository purpose could not be be determined from the available evidence.
+Describe what problem the repository solves, who it appears to be built for, how its major technologies support that purpose, and the overall engineering direction of the project.
+
+Do not invent functionality that is not supported by the supplied evidence.
+
+If the repository description is missing, explicitly state that no description was provided and infer only high-level purpose from deterministic metadata such as repository name, framework, primary language, and repository classification.
+
+The Repository Overview should read like the opening section of a professional architecture review rather than a short GitHub description.
 
 Report Structure
 

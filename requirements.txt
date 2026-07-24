@@ -14,3 +14,6 @@ pandas>=2.3.0
 
 # AI
 huggingface_hub>=0.34.0
+
+#GitHUb Blob API
+github
