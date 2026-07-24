@@ -1,48 +1,150 @@
-# 🚀 Orzyn AI Research
+<div align="center">
 
-> Research notebooks powering the development of **Orzyn AI**, an AI-powered GitHub Repository Intelligence Platform.
+# 🚀 Orzyn AI m2.0
+
+### Intelligent Repository Analysis for Modern Software Engineering
+
+<img src="https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+<img src="https://img.shields.io/badge/FastAPI-0.116+-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+<img src="https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" />
+<img src="https://img.shields.io/badge/GitHub-GraphQL-181717?style=for-the-badge&logo=github" />
+<img src="https://img.shields.io/badge/License-MIT-success?style=for-the-badge" />
+
+<br>
+
+**Orzyn AI transforms GitHub repositories into comprehensive engineering intelligence using deterministic software analysis and large language models.**
+
+*Analyze repositories. Review architecture. Discover engineering insights.*
 
 ---
 
-## 📖 Overview
+</div>
 
-This repository contains the complete research and experimentation process behind **Orzyn AI**.
+# ✨ Features
 
-Unlike the production repository, this project focuses entirely on:
+- 📦 Repository Intelligence
+- 🏗️ Architecture Analysis
+- 📊 Repository Health Scoring
+- 👨‍💻 Developer Activity Analysis
+- 🔀 Commit & Pull Request Analytics
+- 🐞 Issue Analysis
+- 📈 Engineering Metrics
+- 🤖 AI-Powered Repository Reviews
+- ⚡ FastAPI REST API
+- 🔌 Provider-Based AI Architecture
+- 🧩 Modular Analysis Pipeline
+- 🌐 GitHub GraphQL Integration
 
-- 🧠 AI experimentation
-- 🔍 GitHub GraphQL exploration
-- 📊 Repository intelligence
-- 📈 Health score research
-- 🤖 Developer intelligence
-- 📚 Rapid prototyping with Jupyter Notebooks
+---
 
-Every notebook represents a milestone in designing the final Orzyn AI engine.
+# 🧠 How It Works
+
+```text
+                GitHub Repository
+                        │
+                        ▼
+             GitHub GraphQL API
+                        │
+                        ▼
+        Deterministic Repository Analysis
+                        │
+                        ▼
+        Repository Intelligence Engine
+                        │
+                        ▼
+          AI Review & Reasoning Layer
+                        │
+                        ▼
+      Professional Engineering Report
+```
+
+Unlike traditional AI wrappers, Orzyn first performs a deterministic analysis of the repository before sending structured evidence to an AI model. This reduces hallucinations, improves consistency, and grounds every review in measurable repository data.
+
+---
+
+# 🔍 Repository Analysis
+
+Orzyn analyzes repositories across multiple engineering dimensions.
+
+### 📁 Repository
+
+- Metadata
+- Languages
+- Topics
+- License
+- Branches
+- Repository Size
+
+### 👨‍💻 Development
+
+- Commit History
+- Pull Requests
+- Issues
+- Contributors
+- Activity Trends
+
+### 📊 Engineering
+
+- Repository Health
+- Codebase Statistics
+- Documentation
+- Configuration
+- Repository Structure
+- Confidence Scoring
+
+---
+
+# 🤖 AI Reviews
+
+Orzyn currently supports multiple review modes.
+
+| Review | Description |
+|---------|-------------|
+| 🏛 Repository Review | Engineering review using repository intelligence |
+| 💻 Code Review | Architecture-focused source code review |
+| 🔬 Deep Code Review | Comprehensive repository and code analysis |
+
+---
+
+# ⚙️ Tech Stack
+
+- 🐍 Python
+- ⚡ FastAPI
+- 🤗 Hugging Face Inference
+- 🔗 GitHub GraphQL API
+- 📊 Pydantic
+- 📦 Dataclasses
+- 🌐 REST API
 
 ---
 
 # 🏗 Repository Structure
 
 ```text
-Orzyn-AI/
+Orzyn-AI-m2.0/
 │
 ├── backend/
 │   │
-│   ├── notebooks/
-│   │   ├── 01_config.ipynb
-│   │   ├── 02_graphql.ipynb
-│   │   ├── 03_repository.ipynb
-│   │   ├── 04_commits.ipynb
-│   │   ├── 05_pull_requests.ipynb
-│   │   ├── 06_issues.ipynb
-│   │   ├── 07_developer.ipynb
-│   │   ├── 08_ai_models.ipynb
-│   │   └── 09_health_score.ipynb
 │   │
-│   ├── cache/
-│   ├── data/
-│   ├── exports/
-│   ├── models/
+│   ├── config.py
+│   ├── graphql_queries.py
+│   ├── repository.py
+│   ├── commits.py
+│   ├── pull_requests.py
+│   ├── issues.py
+│   ├── developer.py
+│   ├── health_score.py
+│   ├── ai_model.py
+│   │
+│   │
+│   ├── codebase.py
+│   ├── engine.py
+│   ├── analyzer.py
+│   ├── report.py
+│   ├── code_ai.py
+│   │
+│   ├── run.py
+│   ├── run_code_ai.py
 │   │
 │   └── orzyn.py
 │
@@ -54,217 +156,118 @@ Orzyn-AI/
 
 ---
 
-# ✨ Features
+# 🚀 Getting Started
 
-- 🔍 GitHub GraphQL API
-- 📦 Repository Intelligence
-- 📝 Commit Analytics
-- 🔀 Pull Request Analytics
-- 🐞 Issue Intelligence
-- 👨‍💻 Developer Intelligence
-- 🤖 AI-powered Repository Analysis
-- ❤️ Context-aware Repository Health Scoring
-
----
-
-# 📚 Notebook Roadmap
-
-| Notebook | Description |
-|----------|-------------|
-| 01 | ⚙ Configuration |
-| 02 | 🌐 GraphQL Validation |
-| 03 | 📦 Repository Intelligence |
-| 04 | 📝 Commit Intelligence |
-| 05 | 🔀 Pull Request Intelligence |
-| 06 | 🐞 Issue Intelligence |
-| 07 | 👨‍💻 Developer Intelligence |
-| 08 | 🤖 AI Models |
-| 09 | ❤️ Health Score |
-
----
-
-# ⚙ Prerequisites
-
-Install:
-
-- Python **3.12+**
-- Git
-- Visual Studio Code (recommended)
-
----
-
-# 📥 Clone the Repository
+## Clone
 
 ```bash
-git clone https://github.com/<your-username>/Orzyn-AI.git
+git clone https://github.com/yourusername/Orzyn-AI-m2.0.git
 
-cd Orzyn-AI
+cd Orzyn-AI-m2.0
 ```
 
----
-
-# 🐍 Create a Virtual Environment
-
-### Windows
-
-```powershell
-python -m venv .venv
-```
-
-Activate:
-
-```powershell
-.venv\Scripts\activate
-```
-
----
-
-### Linux / macOS
+## Install
 
 ```bash
-python3 -m venv .venv
-
-source .venv/bin/activate
-```
-
----
-
-# 📦 Install Dependencies
-
-```bash
-pip install --upgrade pip
-
 pip install -r requirements.txt
 ```
 
----
-
-# 📓 Create the Jupyter Kernel
-
-Install the kernel into Jupyter:
-
-```bash
-python -m ipykernel install --user --name orzyn-ai --display-name "Python (Orzyn AI)"
-```
-
-After opening Jupyter or VS Code, select:
-
-```
-Python (Orzyn AI)
-```
-
-as the notebook kernel.
-
----
-
-# 🔑 Environment Variables
-
-Create a `.env` file in the project root.
+## Environment
 
 ```env
-GITHUB_TOKEN=your_github_personal_access_token
-
+GITHUB_TOKEN=your_github_token
 HF_TOKEN=your_huggingface_token
 ```
 
----
-
-# ▶ Running the Notebooks
-
-Launch Jupyter:
+## Start API
 
 ```bash
-jupyter notebook
+python -m backend.server
 ```
 
-or
-
-```bash
-jupyter lab
-```
-
-Open the notebooks in order:
+FastAPI will be available at
 
 ```
-01_config
-
-↓
-
-02_graphql
-
-↓
-
-03_repository
-
-↓
-
-04_commits
-
-↓
-
-05_pull_requests
-
-↓
-
-06_issues
-
-↓
-
-07_developer
-
-↓
-
-08_ai_models
-
-↓
-
-09_health_score
+http://localhost:8000
 ```
 
-Each notebook builds upon the previous one.
+Interactive documentation
+
+```
+http://localhost:8000/docs
+```
 
 ---
 
-# 🧪 Technologies
+# 📡 API Endpoints
 
-- 🐍 Python
-- 📓 Jupyter Notebook
-- 🌐 GitHub GraphQL API
-- 🤗 Hugging Face
-- 🐼 Pandas
-- 📡 Requests
-- 🔒 Python Dotenv
+```http
+POST /repository-review
+```
+
+Generate a repository engineering review.
 
 ---
 
-# 🎯 Purpose
+```http
+POST /code-review
+```
 
-This repository documents the research and experimentation that led to the Orzyn AI architecture.
-
-The notebooks intentionally prioritize:
-
-- experimentation
-- validation
-- rapid iteration
-- algorithm development
-- AI research
-
-over production-ready software engineering.
-
-The production implementation lives in a separate repository.
+Generate an AI-powered architecture review.
 
 ---
 
-# 👨‍💻 Author
+```http
+POST /deep-code-review
+```
 
-**Kenny Richardson**
-
-Computer Science Engineering (AI & ML)
-
-Developer • AI Engineer • Software Architect
+Perform a comprehensive engineering analysis of the repository.
 
 ---
 
-# 📄 License
+# 🎯 Design Philosophy
 
-Licensed under the **MIT License**.
+Orzyn follows a hybrid intelligence approach.
+
+Instead of asking an LLM to inspect an entire repository blindly, the platform first extracts deterministic engineering evidence using static analysis, repository metadata, and software metrics. The AI model is then responsible for interpreting that evidence and producing a professional engineering review.
+
+This architecture provides:
+
+- ✅ Lower hallucination rates
+- ✅ Consistent scoring
+- ✅ Explainable recommendations
+- ✅ Reproducible analysis
+- ✅ Reduced token usage
+
+---
+
+# 🛣️ Roadmap
+
+- ✅ Repository Intelligence
+- ✅ AI Repository Reviews
+- ✅ Code Review Engine
+- ✅ FastAPI Backend
+- 🚧 Provider Abstraction
+- 🚧 Local Model Support
+- 🚧 Web Dashboard
+- 🚧 Repository Comparison
+- 🚧 Team Analytics
+- 🚧 Custom AI Models
+
+---
+
+# 🤝 Contributing
+
+Contributions, ideas, feature requests, and engineering discussions are always welcome.
+
+If you'd like to improve Orzyn AI, feel free to open an issue or submit a pull request.
+
+---
+
+<div align="center">
+
+## ⭐ If you found Orzyn AI useful, consider giving the repository a star!
+
+**Built with ⚡ for developers who believe software deserves better engineering insights.**
+
+</div>
