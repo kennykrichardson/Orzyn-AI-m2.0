@@ -20,7 +20,7 @@ from backend.developer import (
     fetch_developers,
 )
 
-from backend. import (
+from backend.health_score import (
     HealthReport,
     build_health_report,
 )

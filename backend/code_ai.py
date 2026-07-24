@@ -41,7 +41,7 @@ from typing import Any
 
 from huggingface_hub import InferenceClient
 
-from backend.api import (
+from backend.engine import (
     report,
 )
 
@@ -58,6 +58,8 @@ from backend.orzyn import (
     get_active_model,
 )
 
+from backend.schemas import ReviewDepth
+
 # ============================================================
 # Constants
 # ============================================================
@@ -66,7 +68,9 @@ PROMPT_VERSION = "2.0.0"
 
 SECTION_SEPARATOR = "\n\n"
 
-MAX_SOURCE_CHARS = 12_000
+MEDIUM_REVIEW_BUDGET = 2500
+
+DEEP_REVIEW_BUDGET = 7000
 
 DEFAULT_TIMEOUT = 120
 
@@ -110,6 +114,7 @@ class PromptBuilder:
     def __init__(
         self,
         report: RepositoryReport,
+        depth: ReviewDepth,
     ):
 
         self.repository_report = report
@@ -117,6 +122,8 @@ class PromptBuilder:
         self.analysis = report.analysis
 
         self.codebase = report.analysis.codebase
+
+        self.depth = depth
 
     @staticmethod
     def section(
@@ -495,27 +502,16 @@ Evidence is more important than speculation.
     def source_file(
         self,
         source: SourceFile,
-    ) -> str:
+        remaining_budget: int,
+    ) -> tuple[str, int]:
 
         content = source.content.strip()
 
-        if len(content) > MAX_SOURCE_CHARS:
-
-            content = (
-
-                content[:MAX_SOURCE_CHARS]
-
-                + "\n\n...<truncated>..."
-
-            )
+        estimated_tokens = len(content) // 4
 
         imports = self.bullet(
 
-            list(
-
-                source.imports,
-
-            ),
+            list(source.imports[:10]),
 
         )
 
@@ -529,7 +525,19 @@ Evidence is more important than speculation.
 
         )
 
-        return f"""
+        if estimated_tokens > remaining_budget:
+
+            allowed_chars = remaining_budget * 4
+
+            content = content[:allowed_chars]
+
+            estimated_tokens = remaining_budget
+
+            if allowed_chars < len(source.content):
+
+                content += "\n\n...<truncated>..."
+
+        block = f"""
 File
 ====
 
@@ -556,6 +564,13 @@ Source
 ```
 """.strip()
 
+        return(
+
+            block, 
+
+            remaining_budget - estimated_tokens,
+        )
+
     # ========================================================
     # Representative Source Files
     # ========================================================
@@ -564,27 +579,59 @@ Source
         self,
     ) -> str:
 
-        files = [
+        budget = (
 
-            self.source_file(
+            MEDIUM_REVIEW_BUDGET
+
+            if self.depth is ReviewDepth.MEDIUM
+
+            else
+
+            DEEP_REVIEW_BUDGET
+
+        )
+
+        remaining_budget = budget
+
+        sections = []
+
+        files = sorted(
+
+            self.codebase.files,
+
+            key=lambda file: file.priority,
+
+            reverse=True,
+
+        )
+
+        for source in files:
+
+            if remaining_budget <= 0:
+
+                break
+
+            section, remaining_budget = self.source_file(
 
                 source,
 
+                remaining_budget,
+
             )
 
-            for source
+            sections.append(
 
-            in self.codebase.files
-
-        ]
+                section,
+ 
+            )
 
         return self.section(
-
+    
             "Representative Source Files",
 
             SECTION_SEPARATOR.join(
 
-                files,
+                sections,
 
             ),
 
@@ -610,20 +657,33 @@ Source
 
             self.analyzers(),
 
-            self.report_sections(),
+        ]
+
+        if self.depth is ReviewDepth.DEEP:
+
+            sections.append(
+
+                self.report_sections(),
+
+            )
+     
+        sections.append(
 
             self.source_files(),
 
+        )
+
+        sections.append(
+
             TASK_PROMPT,
 
-        ]
+        )
 
         return SECTION_SEPARATOR.join(
 
             sections,
 
         )
-
 # ============================================================
 # Task Prompt
 # ============================================================
@@ -893,6 +953,7 @@ class CodeAI:
     @staticmethod
     def prompt(
         report: RepositoryReport,
+        depth: ReviewDepth = ReviewDepth.MEDIUM,
     ) -> str:
 
         """
@@ -905,6 +966,7 @@ class CodeAI:
 
         return PromptBuilder(
             report,
+            depth,
         ).build()
 
     @staticmethod
@@ -925,7 +987,8 @@ class CodeAI:
     def review(
         self,
         report: RepositoryReport,
-        **kwargs: Any,
+        depth: ReviewDepth = ReviewDepth.MEDIUM,
+        **kwargs,
     ) -> CodeReview:
 
         """
@@ -935,6 +998,7 @@ class CodeAI:
 
         prompt = self.prompt(
             report,
+            depth,
         )
 
         response = self.inference.generate(
@@ -959,7 +1023,8 @@ class CodeAI:
 
     def review_repository(
         self,
-        **kwargs: Any,
+        depth: ReviewDepth = ReviewDepth.MEDIUM,
+        **kwargs,
     ) -> CodeReview:
 
         """
@@ -983,6 +1048,8 @@ class CodeAI:
 
             repository_report,
 
+            depth=depth,
+
             **kwargs,
 
         )
@@ -1000,25 +1067,23 @@ _DEFAULT_CODE_AI = CodeAI()
 
 def review(
     report: RepositoryReport,
-    **kwargs: Any,
+    depth: ReviewDepth = ReviewDepth.MEDIUM,
+    **kwargs,
 ) -> CodeReview:
-
-    """
-    Perform an AI architectural review from an
-    existing deterministic RepositoryReport.
-    """
 
     return _DEFAULT_CODE_AI.review(
 
         report,
 
+        depth=depth,
+
         **kwargs,
 
     )
 
-
 def review_repository(
-    **kwargs: Any,
+    depth: ReviewDepth = ReviewDepth.MEDIUM,
+    **kwargs,
 ) -> CodeReview:
 
     """
@@ -1029,6 +1094,8 @@ def review_repository(
 
     return _DEFAULT_CODE_AI.review_repository(
 
+        depth=depth,
+
         **kwargs,
 
     )
@@ -1036,6 +1103,7 @@ def review_repository(
 
 def build_prompt(
     report: RepositoryReport,
+    depth: ReviewDepth = ReviewDepth.MEDIUM,
 ) -> str:
 
     """
@@ -1048,6 +1116,8 @@ def build_prompt(
     return CodeAI.prompt(
 
         report,
+
+        depth,
 
     )
 
