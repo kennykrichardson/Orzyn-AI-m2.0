@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from huggingface_hub import InferenceClient
+from openai import OpenAI
 
 from backend.commits import (
     CommitProfile,
@@ -41,7 +41,7 @@ from backend.repository import (
 )
 
 from backend.orzyn import (
-    HF_TOKEN,
+    OPENROUTER_API_KEY,
     get_active_model,
     get_active_repository,
 )
@@ -54,7 +54,7 @@ PROMPT_VERSION = "2.0"
 
 DEFAULT_TEMPERATURE = 0.2
 
-DEFAULT_MAX_TOKENS = 1200
+DEFAULT_MAX_TOKENS = 600
 
 DEFAULT_TOP_P = 0.95
 
@@ -144,11 +144,11 @@ class AIInference:
 
         self.model = model or config.model
 
-        self.client = InferenceClient(
+        self.client = OpenAI(
 
-            api_key=HF_TOKEN,
+            api_key=OPENROUTER_API_KEY,
 
-            timeout=DEFAULT_TIMEOUT,
+            base_url="https://openrouter.ai/api/v1",
 
         )
 
@@ -161,7 +161,7 @@ class AIInference:
         **kwargs: Any,
     ) -> AIResponse:
 
-        if self.provider != "huggingface":
+        if self.provider != "openrouter":
 
             raise ValueError(
 

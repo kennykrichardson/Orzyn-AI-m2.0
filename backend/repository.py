@@ -11,7 +11,6 @@ Transform GitHub repository data into structured intelligence.
 
 from dataclasses import dataclass, field
 
-from backend.config import GITHUB_HEADERS
 from backend.graphql_queries import client
 from backend.orzyn import (
     get_active_repository,

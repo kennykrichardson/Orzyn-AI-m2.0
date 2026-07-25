@@ -38,9 +38,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
-
-from huggingface_hub import InferenceClient
-
+from openai import OpenAI
 from backend.engine import (
     report,
 )
@@ -54,7 +52,7 @@ from backend.report import (
 )
 
 from backend.orzyn import (
-    HF_TOKEN,
+    OPENROUTER_API_KEY,
     get_active_model,
 )
 
@@ -68,9 +66,9 @@ PROMPT_VERSION = "2.0.0"
 
 SECTION_SEPARATOR = "\n\n"
 
-MEDIUM_REVIEW_BUDGET = 2500
+MEDIUM_REVIEW_BUDGET = 1500
 
-DEEP_REVIEW_BUDGET = 7000
+DEEP_REVIEW_BUDGET = 4000
 
 DEFAULT_TIMEOUT = 120
 
@@ -511,7 +509,7 @@ Evidence is more important than speculation.
 
         imports = self.bullet(
 
-            list(source.imports[:10]),
+            list(source.imports[:5]),
 
         )
 
@@ -843,9 +841,9 @@ class CodeInference:
 
     def _create_client(
         self,
-    ) -> InferenceClient:
+    ) -> OpenAI:
 
-        if self.provider != "huggingface":
+        if self.provider != "openrouter":
 
             raise ValueError(
 
@@ -853,11 +851,11 @@ class CodeInference:
 
             )
 
-        return InferenceClient(
+        return OpenAI(
 
-            api_key=HF_TOKEN,
+            api_key=OPENROUTER_API_KEY,
 
-            timeout=self.config.timeout,
+            base_url="https://openrouter.ai/api/v1",
 
         )
 

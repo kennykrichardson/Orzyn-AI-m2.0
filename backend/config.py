@@ -13,7 +13,7 @@ Responsibilities
 • Load environment variables
 • Define project paths
 • Configure GitHub GraphQL endpoint
-• Configure HuggingFace endpoint
+• Configure OpenRouter endpoint
 • Verify project directories
 • Provide reusable configuration for every notebook
 
@@ -84,7 +84,7 @@ GITHUB_TOKEN: str | None = os.getenv("GITHUB_TOKEN")
 
 
 
-HF_TOKEN: str | None = os.getenv("HF_TOKEN")
+OPENROUTER_API_KEY: str | None = os.getenv("OPENROUTER_API_KEY")
 
 
 
@@ -94,8 +94,8 @@ GITHUB_HEADERS = {
     "Accept": "application/vnd.github+json",
 }
 
-HF_HEADERS = {
-    "Authorization": f"Bearer {HF_TOKEN}"
+OPENROUTER_API_KEY = {
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}"
 }
 
 
@@ -119,12 +119,12 @@ FRONTEND_URL: Final[str] = os.getenv(
 
 DEFAULT_AI_PROVIDER: Final[str] = os.getenv(
     "DEFAULT_AI_PROVIDER",
-    "huggingface",
+    "openrouter",
 )
 
 DEFAULT_MODEL: Final[str] = os.getenv(
     "DEFAULT_MODEL",
-    "Qwen/Qwen2.5-7B-Instruct",
+    "qwen/qwen3-coder",
 )
 
 
@@ -155,9 +155,9 @@ def validate_environment() -> None:
             "Missing environment variable: GITHUB_TOKEN"
         )
 
-    if not HF_TOKEN:
+    if not OPENROUTER_API_KEY:
         raise RuntimeError(
-            "Missing environment variable: HF_TOKEN"
+            "Missing environment variable: OPENROUTER_API_KEY"
         )
 
     for directory in DIRECTORIES:
@@ -205,7 +205,7 @@ __all__ = [
     "DIRECTORIES",
     "GITHUB_GRAPHQL_URL",
     "GITHUB_TOKEN",
-    "HF_TOKEN",
+    "OPENROUTERS_API_KEY",
     "GITHUB_HEADERS",
     "HF_HEADERS",
     "API_PREFIX",

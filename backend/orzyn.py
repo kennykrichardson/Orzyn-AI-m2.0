@@ -55,7 +55,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 GRAPHQL_URL = "https://api.github.com/graphql"
 
@@ -197,11 +197,11 @@ ACTIVE_REPOSITORY = RepositoryConfig(
 
 ACTIVE_MODEL = AIModelConfig(
 
-    provider="huggingface",
+    provider="openrouter",
 
     model=os.getenv(
-        "HF_MODEL",
-        "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "OPENROUTER_MODEL",
+        "qwen/qwen3-coder",
     ),
 
     temperature=0.2,
