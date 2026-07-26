@@ -30,4 +30,4 @@ class ReviewRequest(BaseModel):
 
     repository: str
 
-    depth: ReviewDepth = ReviewDepth.MEDIUM
+    depth: ReviewDepth = ReviewDepth.MEDIUM   

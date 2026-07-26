@@ -56,8 +56,8 @@ def health() -> HealthResponse:
         status="ok",
 
         version="2.0.0",
-
-    )
+   
+    )    
 
 @router.post(
     "/repository-review",

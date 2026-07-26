@@ -8,4 +8,4 @@ app = FastAPI(
     description="Developer Intelligence Platform",
 )
 
-app.include_router(router)
+app.include_router(router)   
