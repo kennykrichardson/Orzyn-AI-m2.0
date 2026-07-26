@@ -250,7 +250,7 @@ def set_active_model(
         top_p=top_p,
         timeout=timeout,
     )
-
+     
     return ACTIVE_MODEL
 
 def get_active_model() -> AIModelConfig:
