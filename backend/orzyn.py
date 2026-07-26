@@ -55,15 +55,9 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN")
 
 GRAPHQL_URL = "https://api.github.com/graphql"
-
-HEADERS = {
-    "Authorization": f"Bearer {GITHUB_TOKEN}",
-    "Content-Type": "application/json",
-    "Accept": "application/vnd.github+json",
-}
 
 # ==========================================================
 # Exceptions
@@ -106,13 +100,9 @@ class AIModelConfig:
 
     model: str
 
-    endpoint: str | None = None
-
     temperature: float = 0.2
 
     top_p: float = 0.9
-
-    max_tokens: int = 4096
 
     timeout: int = 120
 
@@ -197,22 +187,35 @@ ACTIVE_REPOSITORY = RepositoryConfig(
 
 ACTIVE_MODEL = AIModelConfig(
 
-    provider="openrouter",
+    provider="huggingface",
 
-    model=os.getenv(
-        "OPENROUTER_MODEL",
-        "qwen/qwen3-coder",
-    ),
+    model=os.getenv("HF_MODEL", "Qwen/Qwen3.5-9B:together"),
 
     temperature=0.2,
 
     top_p=0.9,
 
-    max_tokens=4096,
-
     timeout=120,
 
 )
+
+GITHUB_HEADERS = {
+    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "Content-Type": "application/json",
+    "Accept": "application/vnd.github+json",
+}
+
+def validate_environment() -> None:
+
+    if not GITHUB_TOKEN:
+        raise RuntimeError(
+            "Missing GITHUB_TOKEN"
+        )
+
+    if not HF_TOKEN:
+        raise RuntimeError(
+            "Missing HF_TOKEN"
+        )
 
 def set_active_repository(
     repository: str,
@@ -233,10 +236,8 @@ def get_active_repository() -> RepositoryConfig:
 def set_active_model(
     provider: str,
     model: str,
-    endpoint: str | None = None,
     temperature: float = 0.2,
     top_p: float = 0.9,
-    max_tokens: int = 4096,
     timeout: int = 120,
 ) -> AIModelConfig:
 
@@ -245,10 +246,8 @@ def set_active_model(
     ACTIVE_MODEL = AIModelConfig(
         provider=provider,
         model=model,
-        endpoint=endpoint,
         temperature=temperature,
         top_p=top_p,
-        max_tokens=max_tokens,
         timeout=timeout,
     )
 
@@ -269,7 +268,7 @@ class GitHubGraphQLClient:
 
         self.url = GRAPHQL_URL
 
-        self.headers = HEADERS
+        self.headers = GITHUB_HEADERS
 
     def execute(
         self,

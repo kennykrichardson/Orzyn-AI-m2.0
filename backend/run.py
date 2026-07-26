@@ -26,7 +26,7 @@ from backend.ai_model import (
     analyze_repository,
 )
 
-from backend.config import (
+from backend.orzyn import (
     validate_environment,
 )
 

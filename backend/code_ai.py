@@ -38,7 +38,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
-from openai import OpenAI
+from huggingface_hub import InferenceClient
 from backend.engine import (
     report,
 )
@@ -52,7 +52,7 @@ from backend.report import (
 )
 
 from backend.orzyn import (
-    OPENROUTER_API_KEY,
+    HF_TOKEN,
     get_active_model,
 )
 
@@ -62,13 +62,11 @@ from backend.schemas import ReviewDepth
 # Constants
 # ============================================================
 
-PROMPT_VERSION = "2.0.0"
-
 SECTION_SEPARATOR = "\n\n"
 
-MEDIUM_REVIEW_BUDGET = 1500
+MEDIUM_REVIEW_BUDGET = 900
 
-DEEP_REVIEW_BUDGET = 4000
+DEEP_REVIEW_BUDGET = 1800
 
 DEFAULT_TIMEOUT = 120
 
@@ -687,137 +685,21 @@ Source
 # ============================================================
 
 TASK_PROMPT = """
-Perform a complete engineering review using ONLY the supplied deterministic analysis and representative source files.
+Review the supplied repository analysis and representative source files.
 
-The deterministic report is authoritative.
+Only use supplied evidence.
 
-Never contradict it.
+Never invent missing information.
 
-If evidence is missing, explicitly state that the information cannot be determined.
+Return:
 
-Structure your review exactly as follows.
-
-# 1. Executive Summary
-
-• Explain what the repository appears to do.
-• Summarize overall engineering quality.
-• Mention the deterministic health score.
-• Mention repository classification.
-
-# 2. Architecture
-
-For every architectural statement:
-
-• describe the observation
-• provide supporting evidence
-• explain why it matters
-
-Do not invent components.
-
-Do not invent execution paths.
-
-Do not invent REST endpoints.
-
-Do not infer internal behavior without source-code evidence.
-
-# 3. Data Flow
-
-Only describe execution flow that is directly observable.
-
-If complete execution flow cannot be determined from the supplied files, explicitly state that limitation.
-
-# 4. Engineering Assessment
-
-Evaluate:
-
-• Code Organization
-• Separation of Concerns
-• Maintainability
-• Readability
-• Modularity
-• Extensibility
-• Dependency Management
-• Error Handling
-
-Every subsection must include:
-
-Observation
-
-Evidence
-
-Impact
-
-# 5. Engineering Strengths
-
-List engineering decisions that should be preserved.
-
-Support every strength with evidence.
-
-# 6. Engineering Weaknesses
-
-Identify architectural problems, technical debt and maintainability issues.
-
-Every weakness must include:
-
-Observation
-
-Evidence
-
-Impact
-
-Avoid generic criticism.
-
-# 7. Risks
-
-Separate risks into:
-
-Critical
-
-High
-
-Medium
-
-Low
-
-Only include risks supported by repository evidence.
-
-# 8. Prioritized Recommendations
-
-Order recommendations from highest impact to lowest.
-
-For every recommendation include:
-
-Problem
-
-Evidence
-
-Recommendation
-
-Expected Benefit
-
-Do not recommend frameworks or technologies unless they directly solve an identified problem.
-
-Avoid generic recommendations such as:
-
-"Add logging"
-
-"Use Flask"
-
-"Use Docker"
-
-unless deterministic evidence clearly justifies them.
-
-Keep recommendations specific to this repository.
-
-Throughout the review:
-
-Never invent information.
-
-Never speculate.
-
-Never contradict deterministic analysis.
-
-Every engineering conclusion should be traceable back to supplied evidence.
+1. Executive Summary
+2. Architecture
+3. Engineering Assessment
+4. Strengths
+5. Weaknesses
+6. Risks
+7. Recommendations
 """.strip()
 
 # ============================================================
@@ -841,9 +723,9 @@ class CodeInference:
 
     def _create_client(
         self,
-    ) -> OpenAI:
+    ) -> InferenceClient:
 
-        if self.provider != "openrouter":
+        if self.provider != "huggingface":
 
             raise ValueError(
 
@@ -851,12 +733,9 @@ class CodeInference:
 
             )
 
-        return OpenAI(
+        return InferenceClient(
 
-            api_key=OPENROUTER_API_KEY,
-
-            base_url="https://openrouter.ai/api/v1",
-
+            api_key=HF_TOKEN,
         )
 
     def generate(
@@ -1129,12 +1008,6 @@ def system_prompt(
     """
 
     return CodeAI.system_prompt()
-
-# ============================================================
-# Version
-# ============================================================
-
-CODE_AI_VERSION = "2.0.0"
 
 # ============================================================
 # Exports

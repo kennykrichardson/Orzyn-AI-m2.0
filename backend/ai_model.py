@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from openai import OpenAI
+from huggingface_hub import InferenceClient
 
 from backend.commits import (
     CommitProfile,
@@ -41,7 +41,7 @@ from backend.repository import (
 )
 
 from backend.orzyn import (
-    OPENROUTER_API_KEY,
+    HF_TOKEN,
     get_active_model,
     get_active_repository,
 )
@@ -50,11 +50,9 @@ from backend.orzyn import (
 # Constants
 # ============================================================
 
-PROMPT_VERSION = "2.0"
-
 DEFAULT_TEMPERATURE = 0.2
 
-DEFAULT_MAX_TOKENS = 600
+DEFAULT_MAX_TOKENS = 1000
 
 DEFAULT_TOP_P = 0.95
 
@@ -144,12 +142,9 @@ class AIInference:
 
         self.model = model or config.model
 
-        self.client = OpenAI(
+        self.client = InferenceClient(
 
-            api_key=OPENROUTER_API_KEY,
-
-            base_url="https://openrouter.ai/api/v1",
-
+            api_key=HF_TOKEN,
         )
 
     def generate(
@@ -161,7 +156,7 @@ class AIInference:
         **kwargs: Any,
     ) -> AIResponse:
 
-        if self.provider != "openrouter":
+        if self.provider != "huggingface":
 
             raise ValueError(
 
@@ -197,9 +192,9 @@ class AIInference:
             )
 
         except Exception as exc:
-            print(type(exc).__name__)
-            print(exc)
-            raise
+            raise RuntimeError(
+                f"AI inference failed: {exc}"
+            ) from exc
 
         response = completion.choices[0].message.content
 
@@ -228,87 +223,23 @@ class AIInference:
 SECTION_SEPARATOR = "\n\n"
 
 TASK_PROMPT = """
-Task
+Review the supplied repository.
 
-Produce a professional engineering review.
+Use only the supplied repository metadata, metrics and health report.
 
-The backend has already completed the technical analysis.
+Explain the findings.
 
-Your responsibility is to explain the supplied evidence.
+Do not recompute scores.
 
-Repository Purpose
+Support every conclusion using supplied evidence.
 
-Begin the Repository Overview with a detailed explanation of the repository's purpose.
+Recommendations should explain:
 
-The Repository Overview should be approximately one well-developed paragraph spanning at least three to five sentences.
+• observed problem
+• impact
+• suggested improvement
 
-Start with the supplied repository description as the primary source of truth.
-
-Expand naturally using the repository name, primary language, repository type, framework, detected technologies, and other deterministic metadata supplied by the backend.
-
-Describe what problem the repository solves, who it appears to be built for, how its major technologies support that purpose, and the overall engineering direction of the project.
-
-Do not invent functionality that is not supported by the supplied evidence.
-
-If the repository description is missing, explicitly state that no description was provided and infer only high-level purpose from deterministic metadata such as repository name, framework, primary language, and repository classification.
-
-The Repository Overview should read like the opening section of a professional architecture review rather than a short GitHub description.
-
-Report Structure
-
-1. Executive Summary
-
-2. Repository Overview
-
-3. Development Analysis
-
-4. Repository Health
-
-5. Engineering Strengths
-
-6. Engineering Weaknesses
-
-7. Engineering Recommendations
-
-Writing Rules
-
-• Base every statement on supplied evidence.
-
-• Never speculate.
-
-• Never invent repository features.
-
-• Never infer developer intent.
-
-• Never infer commit purpose.
-
-• Respect the repository type.
-
-• Ignore Not Applicable metrics.
-
-• Explain why scores were assigned.
-
-• Explain confidence.
-
-• Keep recommendations specific.
-
-• If no improvement is justified, explicitly state that current engineering practices should be maintained.
-
-Tone
-
-Write like a senior software architect reviewing a production codebase.
-
-Be concise.
-
-Avoid repetition.
-
-Avoid generic advice.
-
-Interpret backend findings.
-
-Do not reinterpret backend scoring logic.
-
-Do not justify a score using assumptions that were not explicitly supplied.
+Keep the review concise.
 """.strip()
 
 def section(
@@ -370,74 +301,28 @@ def kv(
 def build_system_prompt() -> str:
 
     return """
-You are Orzyn AI.
+You are Orzyn AI, a senior software architect.
 
-You are a Senior Software Architect performing an engineering review.
+The supplied repository analysis is authoritative.
 
-The backend has already analyzed the repository.
+Explain the evidence.
 
-The backend computed all engineering metrics.
+Never invent missing information.
 
-Your job is to explain them.
+Do not contradict supplied metrics.
 
-Do NOT recompute scores.
+Keep recommendations practical and evidence-based.
 
-Do NOT infer technologies, files, architecture, testing, CI/CD, documentation or engineering practices that were not supplied.
+If information cannot be determined, explicitly say so.
 
-The repository description, homepage, repository name, and all backend-computed metrics are trusted evidence.
+Return:
 
-You may summarize or rephrase this information naturally.
-
-Do not invent functionality beyond the supplied evidence.
-
-Never speculate.
-
-Never guess.
-
-Never fabricate.
-
-Always separate:
-
-• Evidence
-• Observation
-• Recommendation
-
-Repository Type matters.
-
-For Personal repositories:
-
-- Do not recommend Git Flow.
-- Do not recommend pull requests.
-- Do not recommend multiple contributors.
-- Do not recommend issue tracking unless backend evidence supports it.
-- Treat Not Applicable metrics as neutral, never negative.
-
-Commit Analysis Rules
-
-- Never infer the purpose of a commit.
-- Never infer developer intent.
-- Never infer project history.
-- Never infer architecture changes.
-- Never infer feature additions.
-- Never infer refactoring.
-
-Discuss only measurable facts supplied by the backend.
-
-If a commit is unusually large, simply state its measured size and explain how large commits generally affect maintainability without assuming why they occurred.
-
-Health Score Rules
-
-- Explain why the backend assigned the score.
-- Do not reinterpret backend scores.
-- Do not contradict backend findings.
-
-Recommendations
-
-Recommendations must originate from supplied evidence.
-
-Avoid generic GitHub advice.
-
-If insufficient evidence exists, explicitly state that no recommendation is necessary.
+1. Executive Summary
+2. Repository Overview
+3. Engineering Assessment
+4. Strengths
+5. Weaknesses
+6. Recommendations
 """.strip()
 
 

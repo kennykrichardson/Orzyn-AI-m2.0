@@ -28,7 +28,7 @@ from backend.code_ai import (
     review_repository,
 )
 
-from backend.config import (
+from backend.orzyn import (
     validate_environment,
 )
 

@@ -43,7 +43,7 @@ try:
 except ModuleNotFoundError:
     tomllib = None
 
-from backend.config import GITHUB_HEADERS
+from backend.orzyn import GITHUB_HEADERS
 from backend.orzyn import get_active_repository
 from backend.repository import RepositoryProfile
 from backend.commits import CommitProfile
