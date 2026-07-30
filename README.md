@@ -112,14 +112,21 @@ The AI receives structured engineering evidence instead of raw repositories, pro
 ## Clone
 
 ```bash
-git clone https://github.com/kennykrichardson/orzyn-ai.git
+git clone https://github.com/kennykrichardson/Orzyn-Ai-m2.0.git
 
-cd orzyn-ai
+cd Orzyn-Ai-m2.0
 ```
 
 ---
 
 ## Backend
+
+Activate Virtual Environment
+
+```bash
+python -m venv .orzyn
+.orzyn\Scripts\activate
+```
 
 Install dependencies.
 
@@ -138,6 +145,11 @@ Start the API.
 
 ```bash
 python -m backend.server
+```
+   (or)
+   
+```bash
+uvicorn backend.api:apps --reload
 ```
 
 Backend
@@ -159,9 +171,9 @@ http://localhost:8000/docs
 ```bash
 cd frontend
 
-npm install
+pnpm install
 
-npm run dev
+pnpm dev
 ```
 
 Frontend
