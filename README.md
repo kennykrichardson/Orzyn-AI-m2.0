@@ -1,164 +1,109 @@
 <div align="center">
 
-# 🚀 Orzyn AI m2.0
+# 🤖 ORZYN AI m2.0
 
-### Intelligent Repository Analysis for Modern Software Engineering
+### 🧠 AI-Powered Developer Intelligence Platform
+
+Analyze. Understand. Improve.
 
 <img src="https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white" />
 <img src="https://img.shields.io/badge/FastAPI-0.116+-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
-<img src="https://img.shields.io/badge/HuggingFace-Transformers-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" />
+<img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+<img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+<img src="https://img.shields.io/badge/HuggingFace-Inference-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" />
 <img src="https://img.shields.io/badge/GitHub-GraphQL-181717?style=for-the-badge&logo=github" />
 <img src="https://img.shields.io/badge/License-MIT-success?style=for-the-badge" />
 
-<br>
-
-**Orzyn AI transforms GitHub repositories into comprehensive engineering intelligence using deterministic software analysis and large language models.**
-
-*Analyze repositories. Review architecture. Discover engineering insights.*
-
 ---
+
+### 🔍 Repository Intelligence • 💻 Code Reviews • 🔬 Deep Engineering Analysis
+
+**Orzyn AI combines deterministic software analysis with Large Language Models to produce engineering reports grounded in real repository data instead of AI guesswork.**
 
 </div>
 
+---
+
 # ✨ Features
 
-- 📦 Repository Intelligence
-- 🏗️ Architecture Analysis
+### 🏛 Repository Intelligence
+
+- 📦 Repository Metadata Analysis
 - 📊 Repository Health Scoring
-- 👨‍💻 Developer Activity Analysis
-- 🔀 Commit & Pull Request Analytics
+- 👨‍💻 Contributor Insights
+- 📈 Development Activity
+- 🔀 Pull Request Analytics
 - 🐞 Issue Analysis
-- 📈 Engineering Metrics
-- 🤖 AI-Powered Repository Reviews
-- ⚡ FastAPI REST API
-- 🔌 Provider-Based AI Architecture
-- 🧩 Modular Analysis Pipeline
+- 📚 Documentation Evaluation
 - 🌐 GitHub GraphQL Integration
 
 ---
 
-# 🧠 How It Works
+### 💻 AI Code Reviews
 
-```text
-                GitHub Repository
-                        │
-                        ▼
-             GitHub GraphQL API
-                        │
-                        ▼
-        Deterministic Repository Analysis
-                        │
-                        ▼
-        Repository Intelligence Engine
-                        │
-                        ▼
-          AI Review & Reasoning Layer
-                        │
-                        ▼
-      Professional Engineering Report
-```
+Choose the level of analysis you need.
 
-Unlike traditional AI wrappers, Orzyn first performs a deterministic analysis of the repository before sending structured evidence to an AI model. This reduces hallucinations, improves consistency, and grounds every review in measurable repository data.
+| Review Mode | Description |
+|--------------|-------------|
+| 🏛 Repository Review | Engineering assessment using repository intelligence |
+| 💻 Code Review | Medium-depth architectural code review |
+| 🔬 Deep Code Review | Comprehensive repository & source code analysis |
 
 ---
 
-# 🔍 Repository Analysis
+### 🎨 Modern Frontend
 
-Orzyn analyzes repositories across multiple engineering dimensions.
-
-### 📁 Repository
-
-- Metadata
-- Languages
-- Topics
-- License
-- Branches
-- Repository Size
-
-### 👨‍💻 Development
-
-- Commit History
-- Pull Requests
-- Issues
-- Contributors
-- Activity Trends
-
-### 📊 Engineering
-
-- Repository Health
-- Codebase Statistics
-- Documentation
-- Configuration
-- Repository Structure
-- Confidence Scoring
+- ⚛ React + TypeScript
+- ⚡ Vite
+- 🎨 Tailwind CSS
+- 🌌 Animated Landing Page
+- ✨ Particle Background
+- ⌨️ Typewriter Report Rendering
+- 📋 One-click Report Copying
+- 📱 Responsive Design
 
 ---
 
-# 🤖 AI Reviews
-
-Orzyn currently supports multiple review modes.
-
-| Review | Description |
-|---------|-------------|
-| 🏛 Repository Review | Engineering review using repository intelligence |
-| 💻 Code Review | Architecture-focused source code review |
-| 🔬 Deep Code Review | Comprehensive repository and code analysis |
-
----
-
-# ⚙️ Tech Stack
+### ⚙️ Backend
 
 - 🐍 Python
 - ⚡ FastAPI
-- 🤗 Hugging Face Inference
-- 🔗 GitHub GraphQL API
-- 📊 Pydantic
-- 📦 Dataclasses
-- 🌐 REST API
+- 🤗 Hugging Face Inference API
+- 🔍 Static Repository Analysis
+- 📊 Deterministic Metrics Engine
+- 🧩 Modular Architecture
+- 🚀 REST API
 
 ---
 
-# 🏗 Repository Structure
+# 🧠 How Orzyn Works
+
+Unlike traditional AI repository reviewers, Orzyn does **not** ask an LLM to inspect a repository blindly.
+
+Instead, it follows a hybrid engineering pipeline.
 
 ```text
-Orzyn-AI-m2.0/
-│
-├── backend/
-│   │
-│   │
-│   ├── config.py
-│   ├── graphql_queries.py
-│   ├── repository.py
-│   ├── commits.py
-│   ├── pull_requests.py        # GitHub GraphQL API
-│   ├── issues.py
-│   ├── developer.py
-│   ├── health_score.py
-│   ├── ai_model.py
-│   │
-│   │
-│   ├── codebase.py
-│   ├── engine.py
-│   ├── analyzer.py             # GitHub Blob API 
-│   ├── report.py
-│   ├── code_ai.py
-│   │
-│   │
-│   ├── api.py
-│   ├── routes.py
-│   ├── schemas.py              # FastAPI Integration
-│   ├── server.py
-│   │
-│   ├── run.py
-│   ├── run_code_ai.py
-│   │                
-│   └── orzyn.py
-│
-├── requirements.txt
-├── README.md
-├── .gitignore
-└── LICENSE
+                    GitHub Repository
+                            │
+                            ▼
+                 GitHub GraphQL API
+                            │
+                            ▼
+          Deterministic Repository Analysis
+                            │
+          ┌─────────────────┴─────────────────┐
+          ▼                                   ▼
+ Repository Intelligence              Source Code Analysis
+          │                                   │
+          └─────────────────┬─────────────────┘
+                            ▼
+                 AI Reasoning & Interpretation
+                            ▼
+             Professional Engineering Report
 ```
+
+The AI receives structured engineering evidence instead of raw repositories, producing reports that are more consistent, explainable, and significantly less prone to hallucination.
 
 ---
 
@@ -167,37 +112,41 @@ Orzyn-AI-m2.0/
 ## Clone
 
 ```bash
-git clone https://github.com/yourusername/Orzyn-AI-m2.0.git
+git clone https://github.com/kennykrichardson/orzyn-ai.git
 
-cd Orzyn-AI-m2.0
+cd orzyn-ai
 ```
 
-## Install
+---
+
+## Backend
+
+Install dependencies.
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Environment
+Create a `.env` file.
 
 ```env
 GITHUB_TOKEN=your_github_token
 HF_TOKEN=your_huggingface_token
 ```
 
-## Start API
+Start the API.
 
 ```bash
 python -m backend.server
 ```
 
-FastAPI will be available at
+Backend
 
 ```
 http://localhost:8000
 ```
 
-Interactive documentation
+Swagger
 
 ```
 http://localhost:8000/docs
@@ -205,75 +154,186 @@ http://localhost:8000/docs
 
 ---
 
-# 📡 API Endpoints
+## Frontend
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+Frontend
+
+```
+http://localhost:5173
+```
+
+---
+
+# 📡 API
+
+## Repository Review
 
 ```http
 POST /repository-review
 ```
 
-Generate a repository engineering review.
+Request
+
+```json
+{
+    "repository": "https://github.com/owner/repository"
+}
+```
 
 ---
+
+## Code Review
 
 ```http
 POST /code-review
 ```
 
-Generate an AI-powered architecture review.
+Medium Review
 
----
-
-```http
-POST /deep-code-review
+```json
+{
+    "repository": "...",
+    "depth": "medium"
+}
 ```
 
-Perform a comprehensive engineering analysis of the repository.
+Deep Review
+
+```json
+{
+    "repository": "...",
+    "depth": "deep"
+}
+```
 
 ---
 
-# 🎯 Design Philosophy
+# 🏗 Project Architecture
 
-Orzyn follows a hybrid intelligence approach.
+```text
+backend/
+│
+├── analysis/
+├── github/
+├── providers/
+├── review/
+├── api/
+│
+├── ai_model.py
+├── code_ai.py
+├── routes.py
+├── schemas.py
+└── server.py
 
-Instead of asking an LLM to inspect an entire repository blindly, the platform first extracts deterministic engineering evidence using static analysis, repository metadata, and software metrics. The AI model is then responsible for interpreting that evidence and producing a professional engineering review.
-
-This architecture provides:
-
-- ✅ Lower hallucination rates
-- ✅ Consistent scoring
-- ✅ Explainable recommendations
-- ✅ Reproducible analysis
-- ✅ Reduced token usage
+frontend/
+│
+├── components/
+├── pages/
+├── services/
+├── assets/
+└── styles/
+```
 
 ---
+
+# 🎯 Engineering Philosophy
+
+Orzyn follows one simple principle.
+
+> **Deterministic systems compute facts. AI interprets facts.**
+
+Repository statistics, metrics, health scores, and structural analysis are computed deterministically.
+
+The AI is responsible only for engineering reasoning, architectural insights, and actionable recommendations.
+
+This separation improves:
+
+- ✅ Reliability
+- ✅ Explainability
+- ✅ Consistency
+- ✅ Lower Token Usage
+- ✅ Reduced Hallucinations
+- ✅ Better Engineering Reports
+
+---
+
+# Screenshots
+
+## 📡 Orzyn Landing Page
+
+![Landing Page](screenshots/orzyn-ai-landing-page.jpeg)
+
+---
+
+## 📈 Dynamic Analytics Graph
+
+![Repository Review](screenshots/orzyn-ai-repo-review.jpeg)
 
 # 🛣️ Roadmap
+
+## ✅ Completed
 
 - ✅ Repository Intelligence
 - ✅ AI Repository Reviews
 - ✅ Code Review Engine
+- ✅ Deep Code Reviews
+- ✅ React Frontend
 - ✅ FastAPI Backend
-- 🚧 Provider Abstraction
-- 🚧 Local Model Support
-- 🚧 Web Dashboard
-- 🚧 Repository Comparison
-- 🚧 Team Analytics
-- 🚧 Custom AI Models
+- ✅ Modern UI
+- ✅ GitHub GraphQL Integration
+- ✅ Hugging Face AI Integration
+
+---
+
+## 🚧 In Progress
+
+- 🚧 Prompt Optimization
+- 🚧 Multi-Provider AI Support
+- 🚧 Local LLM Support
+- 🚧 Improved Repository Context Selection
+- 🚧 Faster Analysis Pipeline
+
+---
+
+## 🔮 Future
+
+- 📊 Repository Comparison
+- 👥 Team Analytics
+- 📈 Historical Trends
+- 🤖 Multiple AI Models
+- ☁️ Cloud Deployment
+- 🔌 Plugin System
 
 ---
 
 # 🤝 Contributing
 
-Contributions, ideas, feature requests, and engineering discussions are always welcome.
+Contributions, ideas, bug reports, feature requests, and engineering discussions are welcome.
 
 If you'd like to improve Orzyn AI, feel free to open an issue or submit a pull request.
 
 ---
 
+# 📜 License
+
+This project is licensed under the MIT License.
+
+---
+
 <div align="center">
 
-## ⭐ If you found Orzyn AI useful, consider giving the repository a star!
+## ⭐ If you found Orzyn AI interesting, consider giving it a star.
 
-**Built with ⚡ for developers who believe software deserves better engineering insights.**
+### Built with ⚡, ☕, Python and React.
+
+**Analyze. Understand. Improve.**
 
 </div>

@@ -175,21 +175,19 @@ def parse_repository_url(
 
     )
 
-ACTIVE_REPOSITORY = RepositoryConfig(
+DEFAULT_REPOSITORY = os.getenv("ORZYN_DEFAULT_REPOSITORY")
 
-    owner="kennykrichardson",
-
-    repository="GeoTrail",
-
-    url="https://github.com/kennykrichardson/GeoTrail"
-
+ACTIVE_REPOSITORY = (
+    parse_repository_url(DEFAULT_REPOSITORY)
+    if DEFAULT_REPOSITORY
+    else None
 )
 
 ACTIVE_MODEL = AIModelConfig(
 
     provider="huggingface",
 
-    model=os.getenv("HF_MODEL", "Qwen/Qwen3.5-9B:together"),
+    model=os.getenv("HF_MODEL", "Qwen/Qwen2.5-Coder-7B-Instruct:featherless-ai"),
 
     temperature=0.2,
 
@@ -230,6 +228,13 @@ def set_active_repository(
     return ACTIVE_REPOSITORY
 
 def get_active_repository() -> RepositoryConfig:
+
+    if ACTIVE_REPOSITORY is None:
+
+        raise RuntimeError(
+            "No active repository configured. "
+            "Send a repository in the API request or set ORZYN_DEFAULT_REPOSITORY."
+        )
 
     return ACTIVE_REPOSITORY
 

@@ -196,7 +196,16 @@ class AIInference:
                 f"AI inference failed: {exc}"
             ) from exc
 
-        response = completion.choices[0].message.content
+        message = completion.choices[0].message
+
+        if not message.content:
+            raise RuntimeError(
+                f"Model produced no final answer. "
+                f"finish_reason={completion.choices[0].finish_reason}, "
+                f"reasoning_length={len(message.reasoning or '')}"
+            )
+
+        response = message.content
 
         return AIResponse(
 
@@ -223,23 +232,13 @@ class AIInference:
 SECTION_SEPARATOR = "\n\n"
 
 TASK_PROMPT = """
-Review the supplied repository.
+The Repository Metadata and Repository Health sections are deterministic backend results.
 
-Use only the supplied repository metadata, metrics and health report.
+Do not reinterpret or contradict them.
 
-Explain the findings.
+Instead, use them as evidence when writing the Engineering Assessment.
 
-Do not recompute scores.
-
-Support every conclusion using supplied evidence.
-
-Recommendations should explain:
-
-• observed problem
-• impact
-• suggested improvement
-
-Keep the review concise.
+Your role is to explain, connect, and interpret the supplied evidence rather than recomputing it.
 """.strip()
 
 def section(
@@ -303,6 +302,12 @@ def build_system_prompt() -> str:
     return """
 You are Orzyn AI, a senior software architect.
 
+Do not output or spend tokens on internal reasoning.
+
+Return only the final repository review.
+
+Begin immediately with "Executive Summary".
+
 The supplied repository analysis is authoritative.
 
 Explain the evidence.
@@ -315,14 +320,31 @@ Keep recommendations practical and evidence-based.
 
 If information cannot be determined, explicitly say so.
 
-Return:
+Return the review using Markdown.
 
-1. Executive Summary
-2. Repository Overview
-3. Engineering Assessment
-4. Strengths
-5. Weaknesses
-6. Recommendations
+Use these exact section headings.
+
+# Executive Summary
+
+# Engineering Assessment
+
+# Strengths
+
+# Weaknesses
+
+# Recommendations
+
+Do not number the headings.
+
+Do not use the symbol '*' at any cost, and only use Markdown headings.
+
+Use Markdown headings only.
+
+Do not output JSON.
+
+Do not output tables unless necessary.
+
+Keep paragraphs concise.
 """.strip()
 
 
@@ -485,37 +507,13 @@ def build_health_prompt(
 
     report = context.health
 
-    category_blocks = []
+    category_scores = "\n".join(
 
-    for category in report.categories:
+        f"{category.name}: {category.score:.1f}"
 
-        metric_lines = []
+        for category in report.categories
 
-        for metric in category.metrics:
-
-            metric_lines.append(
-
-                f"""\
-• {metric.name}
-  Score: {metric.score:.1f}
-  Status: {metric.status.value}
-  Explanation: {metric.explanation}
-"""
-
-            )
-
-        category_blocks.append(
-
-            f"""
-{category.name}
-
-Category Score:
-{category.score:.1f}
-
-{chr(10).join(metric_lines)}
-""".strip()
-
-        )
+    )
 
     strengths = bullet_list(
 
@@ -525,21 +523,21 @@ Category Score:
 
     weaknesses = bullet_list(
 
-        report.weaknesses
+        report.weaknesses,
 
     )
 
     recommendations = bullet_list(
 
-        report.recommendations
+        report.recommendations,
 
     )
 
     return section(
 
-    "Repository Health",
+        "Repository Health",
 
-    f"""
+        f"""
 Overall Score:
 {report.overall_score:.1f}
 
@@ -549,17 +547,9 @@ Confidence:
 Repository Type:
 {report.repository_type.value}
 
-Repository Classification
+Category Scores
 
-This repository was classified by the backend.
-
-Metrics marked Not Applicable were excluded from scoring.
-
-Do not criticize excluded metrics.
-
-Category Analysis
-
-{chr(10).join(category_blocks)}
+{category_scores}
 
 Strengths
 
@@ -574,11 +564,9 @@ Recommendations
 {recommendations}
 """.strip(),
 
-)
+    )
 
 PROMPT_BUILDERS = (
-
-    build_repository_prompt,
 
     build_commit_prompt,
 

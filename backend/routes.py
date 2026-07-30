@@ -17,6 +17,9 @@ from backend.ai_model import (
 from backend.code_ai import (
     review_repository,
 )
+from backend.orzyn import (
+    set_active_repository,
+)
 
 from backend.schemas import (
     HealthResponse,
@@ -66,6 +69,10 @@ def health() -> HealthResponse:
 def repository_review(
     request: ReviewRequest,
 ):
+    set_active_repository(
+        request.repository,
+    )
+
     analysis = analyze_repository()
 
     return asdict(analysis)
@@ -77,30 +84,13 @@ def repository_review(
 def code_review(
     request: ReviewRequest,
 ):
+    set_active_repository(
+        request.repository,
+    )
 
     review = review_repository(
 
-        depth=ReviewDepth.MEDIUM,
-
-    )
-
-    return asdict(
-
-        review,
-
-    )
-
-@router.post(
-    "/deep-code-review",
-    tags=["Code"],
-)
-def deep_code_review(
-    request: ReviewRequest,
-):
-
-    review = review_repository(
-
-        depth=ReviewDepth.DEEP,
+        depth=request.depth,
 
     )
 

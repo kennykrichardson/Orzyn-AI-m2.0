@@ -1,0 +1,585 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Osiris";
+  src: url("/fonts/Osiris.otf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: #030406;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: #030406;
+  color: #fff;
+  font-family: Inter, ui-sans-serif, system-ui,
+    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.webgl-layer{
+
+    position:absolute;
+
+    inset:0;
+
+    z-index:0;
+
+    overflow:hidden;
+
+}
+
+.boot{
+
+    position:fixed;
+
+    inset:0;
+
+    z-index:9999;
+
+    background:#050608;
+
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.page-field {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    radial-gradient(circle at 50% 36%, rgba(255, 255, 255, 0.075), transparent 34%),
+    #030406;
+  background-size: 22px 22px, 22px 22px, auto, auto;
+  mask-image: radial-gradient(circle at center, black, transparent 82%);
+}
+
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.nav-link:hover {
+  color: white;
+  transform: translateY(-1px);
+}
+
+.icon-button {
+  display: inline-grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(255, 255, 255, 0.82);
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.icon-button:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.055);
+  transform: translateY(-1px);
+}
+
+.hero-frame,
+.report-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.018);
+  box-shadow: 0 0 80px rgba(255, 255, 255, 0.035);
+}
+
+.hero-frame::before,
+.report-frame::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, transparent 0 12%, rgba(255, 255, 255, 0.08) 12.05%, transparent 12.1% 88%, rgba(255, 255, 255, 0.08) 88.05%, transparent 88.1%),
+    linear-gradient(transparent 0 8%, rgba(255, 255, 255, 0.08) 8.05%, transparent 8.1% 92%, rgba(255, 255, 255, 0.08) 92.05%, transparent 92.1%);
+  opacity: 0.52;
+}
+
+.corner-grid {
+  pointer-events: none;
+  position: absolute;
+  inset: 7% 6%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-width: 1px 0;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  padding: 0.85rem 1.25rem;
+  background: rgba(0, 0, 0, 0.18);
+  font-family: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  font-size: 0.92rem;
+  letter-spacing: 0.24em;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.repo-input {
+  display: flex;
+  min-height: 5.4rem;
+  align-items: center;
+  gap: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  padding: 0 1.25rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.repo-input:focus-within {
+  border-color: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 0 50px rgba(255, 255, 255, 0.055);
+}
+
+.analyze-button {
+  margin-inline: auto;
+  display: flex;
+  min-height: 5.2rem;
+  width: min(100%, 38rem);
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.055);
+  color: white;
+  font-size: 1.45rem;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.analyze-button:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(-1px);
+}
+
+.analyze-button:disabled {
+  cursor: not-allowed;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  opacity: 0;
+  animation: statusIn 900ms ease forwards, statusPulse 1800ms ease-in-out infinite;
+}
+
+.status-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 0 16px rgba(255, 255, 255, 0.45);
+}
+
+.report-frame {
+  padding: clamp(1.5rem, 3vw, 3.4rem);
+}
+
+.report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.report-header h1 {
+  margin: 0;
+  font-family: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.report-header p {
+  margin: 0.6rem 0 0;
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.small-command {
+  min-height: 2.75rem;
+  min-width: 11rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: transparent;
+  padding: 0.85rem 1.4rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  display: inline-flex;
+  color: rgba(255, 255, 255, 0.72);
+  transition: border-color 180ms ease, color 180ms ease;
+}
+
+.small-command:hover {
+  border-color: rgba(255, 255, 255, 0.34);
+  color: white;
+}
+
+.report-rule {
+  height: 1px;
+  margin: 2rem 0 1.7rem;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+.report-body {
+  position: relative;
+  max-width: 112rem;
+  color: rgba(255, 255, 255, 0.78);
+  font-family: "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+  font-size: clamp(0.86rem, 1vw, 1.05rem);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.report-body h1,
+.report-body h2,
+.report-body h3 {
+  margin: 1.4rem 0 0.7rem;
+  color: rgba(255, 255, 255, 0.94);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.report-body h1 {
+  font-size: 1.35em;
+}
+
+.report-body h2 {
+  font-size: 1.18em;
+}
+
+.report-body h3 {
+  font-size: 1.08em;
+}
+
+.report-body p {
+  margin: 0.08rem 0;
+}
+
+.typing-caret {
+  display: inline-block;
+  width: 0.62rem;
+  height: 1.15rem;
+  margin-left: 0.15rem;
+  translate: 0 0.16rem;
+  background: rgba(255, 255, 255, 0.85);
+  animation: caretBlink 900ms steps(2, jump-none) infinite;
+}
+
+.empty-report {
+  display: grid;
+  min-height: 38vh;
+  place-content: center;
+  gap: 2rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+@keyframes statusIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes statusPulse {
+  50% {
+    color: rgba(255, 255, 255, 0.82);
+  }
+}
+
+@keyframes caretBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .nav-link span {
+    display: none;
+  }
+
+  .hero-frame,
+  .report-frame {
+    border-radius: 18px;
+  }
+
+  .repo-input {
+    min-height: 4.5rem;
+    gap: 0.8rem;
+  }
+
+  .analyze-button {
+    min-height: 4.6rem;
+    font-size: 1.1rem;
+  }
+
+  .eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+  }
+
+  .report-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* ===========================
+   ORZYN AI BOOT INTRO
+=========================== */
+
+.boot {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+
+    display: grid;
+    place-items: center;
+
+    overflow: hidden;
+
+    background: #050505;
+}
+
+.boot__particle {
+    position: absolute;
+
+    width: 9px;
+    height: 9px;
+
+    border-radius: 999px;
+
+    background: #b32025;
+
+    box-shadow:
+        0 0 18px rgba(179, 32, 37, .65),
+        0 0 42px rgba(179, 32, 37, .22);
+}
+
+.boot__particle::before,
+.boot__particle::after {
+
+    content: "";
+
+    position: absolute;
+
+    inset: -45vmax;
+
+    background-image:
+        radial-gradient(
+            circle,
+            rgba(179,32,37,.82) 0 1px,
+            transparent 1.6px
+        );
+
+    background-size:28px 28px;
+
+    animation:particleDrift 2.2s linear infinite;
+}
+
+.boot__particle::after{
+
+    transform:rotate(33deg) scale(.72);
+
+    opacity:.62;
+}
+
+.boot__logo{
+
+    z-index:2;
+
+    display:grid;
+
+    gap:.2rem;
+
+    text-align:center;
+
+    color:white;
+
+    font-size:clamp(2.4rem,7vw,7rem);
+
+    font-weight:800;
+
+    text-transform:uppercase;
+}
+
+.boot__logo strong{
+
+    color:#b32025;
+
+    font-size:.35em;
+
+    letter-spacing:.4em;
+}
+
+.boot__status{
+
+    position:absolute;
+
+    bottom:18%;
+
+    color:rgba(255,255,255,.7);
+
+    letter-spacing:.35em;
+
+    font-size:.72rem;
+}
+
+.boot__scan{
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+        linear-gradient(
+            180deg,
+            transparent,
+            rgba(179,32,37,.18),
+            transparent
+        );
+
+    transform:translateY(-100%);
+
+    animation:scanline 1.2s linear infinite;
+}
+
+.boot__noise{
+
+    position:absolute;
+
+    inset:0;
+
+    opacity:.18;
+
+    background:
+
+        repeating-linear-gradient(
+            90deg,
+            transparent 0 7px,
+            rgba(179,32,37,.05) 8px
+        ),
+
+        repeating-linear-gradient(
+            0deg,
+            transparent 0 12px,
+            rgba(255,255,255,.04) 13px
+        );
+}
+
+@keyframes scanline{
+
+    to{
+
+        transform:translateY(100%);
+
+    }
+
+}
+
+@keyframes particleDrift{
+
+    to{
+
+        transform:translate3d(28px,-28px,0);
+
+    }
+
+}
+
+/* ===========================
+   ORZYN AI DISPLAY FONT
+=========================== */
+
+.osiris-title{
+
+    font-family:"Osiris", sans-serif;
+
+    font-weight:400;
+
+    text-transform:uppercase;
+
+    letter-spacing:.08em;
+
+}
+
+.osiris-heading{
+
+    font-family:"Osiris", sans-serif;
+
+    font-weight:400;
+
+    letter-spacing:.06em;
+
+    text-transform:uppercase;
+
+}
+
+.osiris-button{
+
+    font-family:"Osiris", sans-serif;
+
+    font-weight:400;
+
+    letter-spacing:.08em;
+
+    text-transform:uppercase;
+
+}
+
+.review-button{
+
+    width:100%;
+
+    min-height:4.8rem;
+
+    font-size:1.05rem;
+
+}

@@ -62,6 +62,8 @@ from backend.schemas import ReviewDepth
 # Constants
 # ============================================================
 
+DEFAULT_MAX_TOKENS = 1800
+
 SECTION_SEPARATOR = "\n\n"
 
 MEDIUM_REVIEW_BUDGET = 900
@@ -645,23 +647,11 @@ Source
 
             self.repository(),
 
-            self.manifests(),
-
             self.statistics(),
 
             self.analysis_summary(),
 
-            self.analyzers(),
-
         ]
-
-        if self.depth is ReviewDepth.DEEP:
-
-            sections.append(
-
-                self.report_sections(),
-
-            )
      
         sections.append(
 
@@ -691,15 +681,29 @@ Only use supplied evidence.
 
 Never invent missing information.
 
-Return:
+Return Markdown.
 
-1. Executive Summary
-2. Architecture
-3. Engineering Assessment
-4. Strengths
-5. Weaknesses
-6. Risks
-7. Recommendations
+Use these exact headings.
+
+# Executive Summary
+
+# Engineering Assessment
+
+# Strengths
+
+# Weaknesses
+
+# Risks
+
+# Recommendations
+
+Do not restate repository metadata.
+
+Do not repeat deterministic statistics.
+
+Interpret the supplied evidence.
+
+Focus on architectural reasoning and actionable engineering recommendations.
 """.strip()
 
 # ============================================================
@@ -774,10 +778,12 @@ class CodeInference:
 
                 top_p=self.config.top_p,
 
-                max_tokens=self.config.max_tokens,
-
+                max_tokens=kwargs.pop(
+                    "max_tokens",
+                    DEFAULT_MAX_TOKENS,
+                ),
+                
                 **kwargs,
-
             )
 
         )
@@ -1014,10 +1020,6 @@ def system_prompt(
 # ============================================================
 
 __all__ = [
-
-    "PROMPT_VERSION",
-
-    "CODE_AI_VERSION",
 
     "CodeAIResponse",
 
