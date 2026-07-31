@@ -17,4 +17,4 @@ huggingface_hub>=0.34.0
 
 # FastAPI and Integration
 fastapi
-uvicorn
+uvicorn   
