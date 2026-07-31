@@ -285,7 +285,7 @@ This separation improves:
 
 ---
 
-## 📈 Dynamic Analytics Graph
+## 📈 AI-Powered Repository Review
 
 ![Repository Review](screenshots/orzyn-ai-repo-review.jpeg)
 
