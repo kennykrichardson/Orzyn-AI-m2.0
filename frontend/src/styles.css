@@ -340,35 +340,33 @@ input {
   }
 }
 
-@media (max-width: 760px) {
-  .nav-link span {
-    display: none;
-  }
+@media (max-width:680px){
 
-  .hero-frame,
-  .report-frame {
-    border-radius: 18px;
-  }
+    body{
 
-  .repo-input {
-    min-height: 4.5rem;
-    gap: 0.8rem;
-  }
+        overflow:hidden;
 
-  .analyze-button {
-    min-height: 4.6rem;
-    font-size: 1.1rem;
-  }
+    }
 
-  .eyebrow {
-    font-size: 0.68rem;
-    letter-spacing: 0.14em;
-  }
+    main{
 
-  .report-header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
+        position:relative;
+
+        width:1920px;
+
+        left:50%;
+
+        transform:
+            translateX(-50%)
+            translateY(2.5rem)
+            scale(.42);
+
+        transform-origin:top center;
+
+        height:calc(100vh/.42);
+
+    }
+
 }
 
 /* ===========================
@@ -581,5 +579,19 @@ input {
     min-height:4.8rem;
 
     font-size:1.05rem;
+
+}
+
+.eyebrow-floating{
+
+    top:1.25rem;
+
+    padding:0;
+
+    border:none;
+
+    background:transparent;
+
+    box-shadow:none;
 
 }

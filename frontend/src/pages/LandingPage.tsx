@@ -96,32 +96,30 @@ switch (selectedReview) {
       )}   
       <div className="page-field" />
       <ParticleField />
-      <div 
-          className="relative z-10 p-6 origin-top"
-      >  
+      <div className="relative z-10 px-6 pt-6 pb-6 origin-top">  
 
-      <section className="mx-auto max-w-[1600px] px-6 pb-10 md:px-16">
-        <div className="hero-frame min-h-[72vh] px-6 py-12 md:px-12 md:py-20">
-            <div className="eyebrow absolute top-1 left-1/2 -translate-x-1/2 z-20">
+      <section className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 md:px-16 pb-10">
+        <div className="hero-frame min-h-screen md:min-h-[72vh] px-5 py-8 md:px-12 md:pt-8 md:pb-14">
+            <div className="eyebrow eyebrow-floating absolute left-1/2 -translate-x-1/2">
               <Sparkles size={18} />
               <span>AI-POWERED REPOSITORY INTELLIGENCE</span>
             </div>          
           <div className="corner-grid" />
-          <div className="mx-auto max-w-6xl text-center">
+          <div className="mx-auto w-full max-w-6xl text-center">
 
 
-            <h1 className="mt-7 osiris-title text-[clamp(4rem,12vw,10.5rem)] font-semibold leading-none text-white">
+            <h1 className="mt-8 osiris-title text-[clamp(3.4rem,18vw,10.5rem)] font-semibold leading-none text-white">
               ORZYN
               <span className="ml-4 inline-flex translate-y-[-0.52em] rounded-lg border border-white/25 px-3 py-2 osiris-title text-[0.16em] font-normal text-white/85">
                 AI
               </span>
             </h1>
 
-            <p className="mt-5 osiris-title text-[clamp(1.2rem,2vw,2rem)] tracking-[0.22em] text-white/68">
+            <p className="mt-6 osiris-title text-[clamp(1rem,5vw,2rem)] tracking-[0.22em] text-white/68">
               ANALYZE. UNDERSTAND. IMPROVE.
             </p>
 
-            <p className="mx-auto font-mono mt-5 max-w-2xl text-lg leading-8 text-white/56">
+            <p className="mx-auto font-mono mt-6 max-w-xl px-2 text-lg leading-8 text-white/56">
               Orzyn AI analyzes your GitHub repository and delivers an engineering report you can trust.
             </p>
 

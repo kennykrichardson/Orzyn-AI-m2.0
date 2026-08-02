@@ -21,7 +21,7 @@ export default function RepositoryInput({ repository, setRepository, disabled, o
         />
       </div>
 
-<div className="grid gap-4 md:grid-cols-3">
+<div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
 
     <button
         type="submit"
