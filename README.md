@@ -1,10 +1,10 @@
 <div align="center">
 
-# 🤖 ORZYN AI m2.0
+# 🤖 ORZYN AI
 
 ### 🧠 AI-Powered Developer Intelligence Platform
    
-Analyze. Understand. Improve.
+Analyze repositories. Understand architecture. Improve software.
 
 <img src="https://img.shields.io/badge/Python-3.12+-3776AB?style=for-the-badge&logo=python&logoColor=white" />
 <img src="https://img.shields.io/badge/FastAPI-0.116+-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
@@ -16,6 +16,10 @@ Analyze. Understand. Improve.
 <img src="https://img.shields.io/badge/License-MIT-success?style=for-the-badge" />
 
 ---
+
+## 🌐 Live Demo
+
+https://orzyn-ai.onrender.com
 
 ### 🔍 Repository Intelligence • 💻 Code Reviews • 🔬 Deep Engineering Analysis
 
@@ -65,15 +69,17 @@ Choose the level of analysis you need.
 
 ---
 
-### ⚙️ Backend
+## Backend
 
-- 🐍 Python
-- ⚡ FastAPI
-- 🤗 Hugging Face Inference API
-- 🔍 Static Repository Analysis
-- 📊 Deterministic Metrics Engine
-- 🧩 Modular Architecture
-- 🚀 REST API
+- Python
+- FastAPI
+- Hugging Face Inference
+- GitHub GraphQL API
+
+## AI
+
+- Qwen 3.5
+- Deterministic Repository Analysis
 
 ---
 
@@ -344,7 +350,7 @@ This project is licensed under the MIT License.
 
 ## ⭐ If you found Orzyn AI interesting, consider giving it a star.
 
-### Built with ⚡, ☕, Python and React.
+### Engineered with ⚡, ☕, Python and React.
 
 **Analyze. Understand. Improve.**
 
