@@ -19,7 +19,7 @@ Analyze repositories. Understand architecture. Improve software.
 
 ## 🌐 Live Demo
 
-https://orzyn-ai.onrender.com
+https://orzyn.onrender.com
 
 ### 🔍 Repository Intelligence • 💻 Code Reviews • 🔬 Deep Engineering Analysis
 
