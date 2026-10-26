@@ -55,7 +55,8 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
+CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID")
 
 GRAPHQL_URL = "https://api.github.com/graphql"
 
@@ -184,11 +185,11 @@ ACTIVE_REPOSITORY = (
 )
 
 ACTIVE_MODEL = AIModelConfig(
-    provider="gemini",
-    model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
-    temperature=float(os.getenv("GEMINI_TEMPERATURE", "0.2")),
-    top_p=float(os.getenv("GEMINI_TOP_P", "0.9")),
-    timeout=int(os.getenv("GEMINI_TIMEOUT", "180")),
+    provider="cloudflare",
+    model=os.getenv("CLOUDFLARE_MODEL", "@cf/zai-org/glm-4.7-flash"),
+    temperature=float(os.getenv("AI_TEMPERATURE", "0.2")),
+    top_p=float(os.getenv("AI_TOP_P", "0.9")),
+    timeout=int(os.getenv("AI_TIMEOUT", "180")),
 )
 
 GITHUB_HEADERS = {
@@ -202,8 +203,11 @@ def validate_environment() -> None:
     if not GITHUB_TOKEN:
         raise RuntimeError("Missing GITHUB_TOKEN")
 
-    if not GEMINI_API_KEY:
-        raise RuntimeError("Missing GEMINI_API_KEY")
+    if not CLOUDFLARE_API_TOKEN:
+        raise RuntimeError("Missing CLOUDFLARE_API_TOKEN")
+
+    if not CLOUDFLARE_ACCOUNT_ID:
+        raise RuntimeError("Missing CLOUDFLARE_ACCOUNT_ID")
 
 
 

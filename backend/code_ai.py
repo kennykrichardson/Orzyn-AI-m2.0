@@ -36,11 +36,9 @@ Orzyn AI m2.0
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from typing import Any
-from google import genai
-from google.genai import types
 from backend.engine import (
     report,
 )
@@ -53,10 +51,8 @@ from backend.report import (
     RepositoryReport,
 )
 
-from backend.orzyn import (
-    GEMINI_API_KEY,
-    get_active_model,
-)
+from backend.orzyn import get_active_model
+from backend.cloudflare_client import generate_text
 
 from backend.schemas import ReviewDepth
 
@@ -713,84 +709,58 @@ Focus on architectural reasoning and actionable engineering recommendations.
 # ============================================================
 
 class CodeInference:
-    """Gemini Developer API client for source-code architectural reviews."""
+    """Cloudflare Workers AI client for source-code architectural reviews."""
 
     def __init__(self, model: str | None = None):
         self.config = get_active_model()
         self.provider = self.config.provider
         self.preferred_model = model or self.config.model
         self.model = self.preferred_model
-
-        if self.provider != "gemini":
+        if self.provider != "cloudflare":
             raise ValueError(f"Unsupported provider: {self.provider}")
-
-        if not GEMINI_API_KEY:
-            raise RuntimeError(
-                "Missing GEMINI_API_KEY. Add it to the backend environment."
-            )
-
-        self.client = genai.Client(api_key=GEMINI_API_KEY)
 
     @staticmethod
     def _is_retryable_provider_error(exc: Exception) -> bool:
-        """Identify temporary capacity, timeout, quota, and model lookup errors."""
         message = str(exc).lower()
         return any(token in message for token in (
-            "503", "unavailable", "service_unavailable",
-            "429", "resource_exhausted", "rate limit",
-            "504", "deadline_exceeded", "timed out",
-            "model_not_found", "not found",
+            "http 429", "http 500", "http 502", "http 503", "http 504",
+            "timed out", "temporarily unavailable", "rate limit", "overloaded",
         ))
 
     def _model_candidates(self) -> list[str]:
         fallback_setting = os.getenv(
-            "GEMINI_FALLBACK_MODELS",
-            "gemini-3.6-flash,gemini-3.5-flash-lite",
+            "CLOUDFLARE_FALLBACK_MODELS",
+            "@cf/openai/gpt-oss-120b",
         )
         candidates = [self.preferred_model]
-        candidates.extend(
-            item.strip() for item in fallback_setting.split(",") if item.strip()
-        )
+        candidates.extend(item.strip() for item in fallback_setting.split(",") if item.strip())
         return list(dict.fromkeys(candidates))
 
     def generate(self, prompt: str, **kwargs: Any) -> CodeAIResponse:
-        """Generate a code review with model fallback for transient provider failures."""
+        """Generate a review, trying configured Cloudflare models after transient failures."""
         max_tokens = kwargs.pop("max_tokens", DEFAULT_MAX_TOKENS)
         temperature = kwargs.pop("temperature", self.config.temperature)
         top_p = kwargs.pop("top_p", self.config.top_p)
         models = self._model_candidates()
         failures: list[str] = []
 
-        generation_config = types.GenerateContentConfig(
-            system_instruction=PromptBuilder.system_prompt(),
-            temperature=temperature,
-            top_p=top_p,
-            max_output_tokens=max_tokens,
-            http_options=types.HttpOptions(timeout=int(self.config.timeout * 1000)),
-        )
-
         for index, model_name in enumerate(models):
             try:
-                completion = self.client.models.generate_content(
+                response_text, used_model, raw = generate_text(
+                    system_prompt=PromptBuilder.system_prompt(),
+                    prompt=prompt,
                     model=model_name,
-                    contents=prompt,
-                    config=generation_config,
+                    temperature=temperature,
+                    top_p=top_p,
+                    max_tokens=max_tokens,
                 )
-                response_text = completion.text
-                if not response_text or not response_text.strip():
-                    raise RuntimeError(
-                        f"Gemini model {model_name} returned no text response. "
-                        "The response may have been blocked or contain no text."
-                    )
-
-                # Keep the primary model unchanged so the next request retries it first.
-                self.model = model_name
+                self.model = used_model
                 return CodeAIResponse(
                     provider=self.provider,
-                    model=model_name,
+                    model=used_model,
                     prompt=prompt,
-                    response=response_text.strip(),
-                    raw=completion,
+                    response=response_text,
+                    raw=raw,
                 )
             except Exception as exc:
                 failures.append(f"{model_name}: {exc}")
@@ -799,12 +769,10 @@ class CodeInference:
 
         details = " | ".join(failures[-3:])
         raise RuntimeError(
-            "Gemini code review failed after trying configured models "
-            f"({', '.join(models)}). The service may be overloaded, a model may "
-            "not be available to this API key, or the request may be too large. "
-            f"Provider details: {details}"
+            "Cloudflare Workers AI code review failed after trying configured models "
+            f"({', '.join(models)}). Check model availability, account billing, token permissions, "
+            f"and request size. Provider details: {details}"
         )
-
 
 
 # ============================================================

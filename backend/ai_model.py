@@ -6,10 +6,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from typing import Any
 
-from google import genai
-from google.genai import types
 
 from backend.commits import (
     CommitProfile,
@@ -42,10 +41,10 @@ from backend.repository import (
 )
 
 from backend.orzyn import (
-    GEMINI_API_KEY,
     get_active_model,
     get_active_repository,
 )
+from backend.cloudflare_client import generate_text
     
 # ============================================================
 # Constants
@@ -131,23 +130,23 @@ class PromptContext:
 # ============================================================
 
 class AIInference:
-    """Gemini Developer API client for repository-level reviews."""
+    """Cloudflare Workers AI client for repository-level reviews."""
 
     def __init__(self, model: str | None = None):
         config = get_active_model()
         self.provider = config.provider
         self.model = model or config.model
-
-        if self.provider != "gemini":
+        if self.provider != "cloudflare":
             raise ValueError(f"Unsupported provider: {self.provider}")
-
-        if not GEMINI_API_KEY:
-            raise RuntimeError(
-                "Missing GEMINI_API_KEY. Add it to the backend environment."
-            )
-
-        self.client = genai.Client(api_key=GEMINI_API_KEY)
         self.timeout = config.timeout
+
+    @staticmethod
+    def _retryable(exc: Exception) -> bool:
+        message = str(exc).lower()
+        return any(token in message for token in (
+            "http 429", "http 500", "http 502", "http 503", "http 504",
+            "timed out", "temporarily unavailable", "rate limit", "overloaded",
+        ))
 
     def generate(
         self,
@@ -157,39 +156,44 @@ class AIInference:
         top_p: float = DEFAULT_TOP_P,
         **kwargs: Any,
     ) -> AIResponse:
-        """Generate a review with Gemini and return the common response model."""
-        config = get_active_model()
-        try:
-            generation_config = types.GenerateContentConfig(
-                system_instruction=build_system_prompt(),
-                temperature=temperature,
-                top_p=top_p,
-                max_output_tokens=max_tokens,
-                http_options=types.HttpOptions(
-                    timeout=int(self.timeout * 1000)
-                ),
-            )
-            completion = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=generation_config,
-            )
-        except Exception as exc:
-            raise RuntimeError(f"Gemini inference failed: {exc}") from exc
+        """Generate a repository review, falling back on transient provider errors."""
+        fallback_setting = os.getenv(
+            "CLOUDFLARE_FALLBACK_MODELS",
+            "@cf/google/gemma-4-26b-a4b-it",
+        )
+        models = list(dict.fromkeys([
+            self.model,
+            *(item.strip() for item in fallback_setting.split(",") if item.strip()),
+        ]))
+        failures: list[str] = []
 
-        response_text = completion.text
-        if not response_text or not response_text.strip():
-            raise RuntimeError(
-                "Gemini returned no text response. "
-                "The response may have been blocked or contain no text."
-            )
+        for index, model_name in enumerate(models):
+            try:
+                response_text, used_model, raw = generate_text(
+                    system_prompt=build_system_prompt(),
+                    prompt=prompt,
+                    model=model_name,
+                    temperature=temperature,
+                    top_p=top_p,
+                    max_tokens=max_tokens,
+                )
+                self.model = used_model
+                return AIResponse(
+                    provider=self.provider,
+                    model=used_model,
+                    prompt=prompt,
+                    response=response_text,
+                    raw=raw,
+                )
+            except Exception as exc:
+                failures.append(f"{model_name}: {exc}")
+                if index == len(models) - 1 or not self._retryable(exc):
+                    break
 
-        return AIResponse(
-            provider=self.provider,
-            model=self.model,
-            prompt=prompt,
-            response=response_text.strip(),
-            raw=completion,
+        raise RuntimeError(
+            "Cloudflare Workers AI repository review failed after trying configured models "
+            f"({', '.join(models)}). Check model availability, token permissions, billing, "
+            f"and request size. Provider details: {' | '.join(failures[-3:])}"
         )
 
 

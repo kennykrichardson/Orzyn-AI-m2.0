@@ -16,10 +16,10 @@ def get_cors_origins() -> list[str]:
     origins = os.getenv("ORZYN_CORS_ORIGINS")
 
     if not origins:
-        return list(DEFAULT_CORS_ORIGINS)
+        return [origin.rstrip("/") for origin in DEFAULT_CORS_ORIGINS]
 
     return [
-        origin.strip()
+        origin.strip().rstrip("/")
         for origin in origins.split(",")
         if origin.strip()
     ]

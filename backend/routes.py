@@ -73,7 +73,25 @@ def repository_review(
         request.repository,
     )
 
-    analysis = analyze_repository()
+    try:
+        analysis = analyze_repository()
+    except Exception as exc:
+        message = str(exc)
+        normalized = message.lower()
+        if any(token in normalized for token in ("http 401", "http 403", "missing cloudflare")):
+            status_code = 502
+        elif "429" in normalized or "rate limit" in normalized:
+            status_code = 429
+        elif any(token in normalized for token in ("http 503", "http 500", "http 502", "temporarily unavailable")):
+            status_code = 503
+        elif "timed out" in normalized or "http 504" in normalized:
+            status_code = 504
+        else:
+            status_code = 502
+        raise HTTPException(
+            status_code=status_code,
+            detail=f"Repository review provider failed: {message[:700]}",
+        ) from exc
 
     return asdict(analysis)
 
@@ -94,9 +112,9 @@ def code_review(request: ReviewRequest):
             raise HTTPException(
                 status_code=503,
                 detail=(
-                    "Gemini is temporarily overloaded. Orzyn tried its configured "
+                    "Cloudflare Workers AI is temporarily unavailable. Orzyn tried its configured "
                     "fallback models, but none completed the review. Retry in a "
-                    "minute. If this persists, check Google AI Studio for model "
+                    "minute. If this persists, check Cloudflare Workers AI for model "
                     "access and service status."
                 ),
             ) from exc
@@ -104,7 +122,7 @@ def code_review(request: ReviewRequest):
             raise HTTPException(
                 status_code=429,
                 detail=(
-                    "Gemini rate or usage limits were reached. Check the API key's "
+                    "Cloudflare Workers AI rate or usage limits may have been reached. Check the account's "
                     "quota and billing, then retry after the limit resets."
                 ),
             ) from exc
@@ -112,7 +130,7 @@ def code_review(request: ReviewRequest):
             raise HTTPException(
                 status_code=504,
                 detail=(
-                    "Gemini could not finish this review before the deadline, even "
+                    "Cloudflare Workers AI could not finish this review before the deadline, even "
                     "after model fallback. Try Medium review or reduce the source "
                     "context sent to the model."
                 ),
