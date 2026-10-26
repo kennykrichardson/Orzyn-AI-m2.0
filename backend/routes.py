@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from backend.ai_model import (
     analyze_repository,
@@ -88,14 +88,24 @@ def code_review(
         request.repository,
     )
 
-    review = review_repository(
+    try:
+        review = review_repository(depth=request.depth)
+    except Exception as exc:
+        # Keep provider failures inside FastAPI's handled response path so
+        # CORSMiddleware can attach CORS headers to the error response.
+        message = str(exc)
+        if "504" in message or "DEADLINE_EXCEEDED" in message:
+            raise HTTPException(
+                status_code=504,
+                detail=(
+                    "Gemini took too long to complete this code review. "
+                    "Try Medium review, or configure a currently supported "
+                    "Gemini model in the GEMINI_MODEL environment variable."
+                ),
+            ) from exc
+        raise HTTPException(
+            status_code=502,
+            detail=f"Code review provider failed: {message[:500]}",
+        ) from exc
 
-        depth=request.depth,
-
-    )
-
-    return asdict(
-
-        review,
-
-    )
+    return asdict(review)
