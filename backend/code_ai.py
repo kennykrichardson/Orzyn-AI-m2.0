@@ -38,7 +38,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
-from huggingface_hub import InferenceClient
+from google import genai
+from google.genai import types
 from backend.engine import (
     report,
 )
@@ -52,7 +53,7 @@ from backend.report import (
 )
 
 from backend.orzyn import (
-    HF_TOKEN,
+    GEMINI_API_KEY,
     get_active_model,
 )
 
@@ -711,108 +712,66 @@ Focus on architectural reasoning and actionable engineering recommendations.
 # ============================================================
 
 class CodeInference:
+    """Gemini Developer API client for source-code architectural reviews."""
 
-    def __init__(
-        self,
-        model: str | None = None,
-    ):
-
+    def __init__(self, model: str | None = None):
         self.config = get_active_model()
-
         self.provider = self.config.provider
-
         self.model = model or self.config.model
 
-        self.client = self._create_client()
+        if self.provider != "gemini":
+            raise ValueError(f"Unsupported provider: {self.provider}")
 
-    def _create_client(
-        self,
-    ) -> InferenceClient:
-
-        if self.provider != "huggingface":
-
-            raise ValueError(
-
-                f"Unsupported provider: {self.provider}"
-
+        if not GEMINI_API_KEY:
+            raise RuntimeError(
+                "Missing GEMINI_API_KEY. Add it to the backend environment."
             )
 
-        return InferenceClient(
-
-            api_key=HF_TOKEN,
-        )
+        self.client = genai.Client(api_key=GEMINI_API_KEY)
 
     def generate(
         self,
         prompt: str,
         **kwargs: Any,
     ) -> CodeAIResponse:
+        """Generate an architectural review using Gemini."""
+        max_tokens = kwargs.pop("max_tokens", DEFAULT_MAX_TOKENS)
+        temperature = kwargs.pop("temperature", self.config.temperature)
+        top_p = kwargs.pop("top_p", self.config.top_p)
 
-        completion = (
-
-            self.client.chat.completions.create(
-
-                model=self.model,
-
-                messages=[
-
-                    {
-
-                        "role": "system",
-
-                        "content": PromptBuilder.system_prompt(),
-
-                    },
-
-                    {
-
-                        "role": "user",
-
-                        "content": prompt,
-
-                    },
-
-                ],
-
-                temperature=self.config.temperature,
-
-                top_p=self.config.top_p,
-
-                max_tokens=kwargs.pop(
-                    "max_tokens",
-                    DEFAULT_MAX_TOKENS,
+        try:
+            generation_config = types.GenerateContentConfig(
+                system_instruction=PromptBuilder.system_prompt(),
+                temperature=temperature,
+                top_p=top_p,
+                max_output_tokens=max_tokens,
+                http_options=types.HttpOptions(
+                    timeout=int(self.config.timeout * 1000)
                 ),
-                
-                **kwargs,
+            )
+            completion = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=generation_config,
+            )
+        except Exception as exc:
+            raise RuntimeError(f"Gemini code review failed: {exc}") from exc
+
+        response_text = completion.text
+        if not response_text or not response_text.strip():
+            raise RuntimeError(
+                "Gemini returned no text response. "
+                "The response may have been blocked or contain no text."
             )
 
-        )
-
-        message = (
-
-            completion
-
-            .choices[0]
-
-            .message
-
-            .content
-
-        )
-
         return CodeAIResponse(
-
             provider=self.provider,
-
             model=self.model,
-
             prompt=prompt,
-
-            response=message,
-
+            response=response_text.strip(),
             raw=completion,
-
         )
+
 
 # ============================================================
 # Code AI

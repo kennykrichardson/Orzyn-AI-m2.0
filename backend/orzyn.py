@@ -55,7 +55,7 @@ load_dotenv(PROJECT_ROOT / ".env")
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-HF_TOKEN = os.getenv("HF_TOKEN")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 GRAPHQL_URL = "https://api.github.com/graphql"
 
@@ -184,17 +184,11 @@ ACTIVE_REPOSITORY = (
 )
 
 ACTIVE_MODEL = AIModelConfig(
-
-    provider="huggingface",
-
-    model=os.getenv("HF_MODEL", "Qwen/Qwen2.5-Coder-7B-Instruct:featherless-ai"),
-
-    temperature=0.2,
-
-    top_p=0.9,
-
-    timeout=120,
-
+    provider="gemini",
+    model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    temperature=float(os.getenv("GEMINI_TEMPERATURE", "0.2")),
+    top_p=float(os.getenv("GEMINI_TOP_P", "0.9")),
+    timeout=int(os.getenv("GEMINI_TIMEOUT", "120")),
 )
 
 GITHUB_HEADERS = {
@@ -204,16 +198,14 @@ GITHUB_HEADERS = {
 }
 
 def validate_environment() -> None:
-
+    """Validate credentials required by the active Orzyn services."""
     if not GITHUB_TOKEN:
-        raise RuntimeError(
-            "Missing GITHUB_TOKEN"
-        )
+        raise RuntimeError("Missing GITHUB_TOKEN")
 
-    if not HF_TOKEN:
-        raise RuntimeError(
-            "Missing HF_TOKEN"
-        )
+    if not GEMINI_API_KEY:
+        raise RuntimeError("Missing GEMINI_API_KEY")
+
+
 
 def set_active_repository(
     repository: str,

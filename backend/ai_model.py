@@ -8,7 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from huggingface_hub import InferenceClient
+from google import genai
+from google.genai import types
 
 from backend.commits import (
     CommitProfile,
@@ -41,7 +42,7 @@ from backend.repository import (
 )
 
 from backend.orzyn import (
-    HF_TOKEN,
+    GEMINI_API_KEY,
     get_active_model,
     get_active_repository,
 )
@@ -130,22 +131,23 @@ class PromptContext:
 # ============================================================
 
 class AIInference:
+    """Gemini Developer API client for repository-level reviews."""
 
-    def __init__(
-        self,
-        model: str | None = None,
-    ):
-
+    def __init__(self, model: str | None = None):
         config = get_active_model()
-
         self.provider = config.provider
-
         self.model = model or config.model
 
-        self.client = InferenceClient(
+        if self.provider != "gemini":
+            raise ValueError(f"Unsupported provider: {self.provider}")
 
-            api_key=HF_TOKEN,
-        )
+        if not GEMINI_API_KEY:
+            raise RuntimeError(
+                "Missing GEMINI_API_KEY. Add it to the backend environment."
+            )
+
+        self.client = genai.Client(api_key=GEMINI_API_KEY)
+        self.timeout = config.timeout
 
     def generate(
         self,
@@ -155,72 +157,42 @@ class AIInference:
         top_p: float = DEFAULT_TOP_P,
         **kwargs: Any,
     ) -> AIResponse:
-
-        if self.provider != "huggingface":
-
-            raise ValueError(
-
-                f"Unsupported provider: {self.provider}"
-
-            )
-
+        """Generate a review with Gemini and return the common response model."""
+        config = get_active_model()
         try:
-
-            completion = self.client.chat.completions.create(
-
-                model=self.model,
-
-                messages=[
-                    {
-                        "role": "system",
-                        "content": build_system_prompt(),
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    },
-                ],
-
+            generation_config = types.GenerateContentConfig(
+                system_instruction=build_system_prompt(),
                 temperature=temperature,
-
-                max_tokens=max_tokens,
-
                 top_p=top_p,
-
-                **kwargs,
-
+                max_output_tokens=max_tokens,
+                http_options=types.HttpOptions(
+                    timeout=int(self.timeout * 1000)
+                ),
             )
-
+            completion = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=generation_config,
+            )
         except Exception as exc:
-            raise RuntimeError(
-                f"AI inference failed: {exc}"
-            ) from exc
+            raise RuntimeError(f"Gemini inference failed: {exc}") from exc
 
-        message = completion.choices[0].message
-
-        if not message.content:
+        response_text = completion.text
+        if not response_text or not response_text.strip():
             raise RuntimeError(
-                f"Model produced no final answer. "
-                f"finish_reason={completion.choices[0].finish_reason}, "
-                f"reasoning_length={len(message.reasoning or '')}"
+                "Gemini returned no text response. "
+                "The response may have been blocked or contain no text."
             )
-
-        response = message.content
 
         return AIResponse(
-
             provider=self.provider,
-
             model=self.model,
-
             prompt=prompt,
-
-            response=response,
-
+            response=response_text.strip(),
             raw=completion,
-
         )
-    
+
+
 # ============================================================
 # Prompt Builders
 # ============================================================
