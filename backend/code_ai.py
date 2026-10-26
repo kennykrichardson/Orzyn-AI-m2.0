@@ -60,7 +60,7 @@ from backend.schemas import ReviewDepth
 # Constants
 # ============================================================
 
-DEFAULT_MAX_TOKENS = 1800
+DEFAULT_MAX_TOKENS = int(os.getenv("AI_MAX_OUTPUT_TOKENS", "4096"))
 
 SECTION_SEPARATOR = "\n\n"
 
@@ -674,6 +674,8 @@ Source
 
 TASK_PROMPT = """
 Review the supplied repository analysis and representative source files.
+
+Produce a complete review with every required heading. Do not stop after the Executive Summary. If the review is long, prioritize concise coverage of every section over an elaborate opening.
 
 Only use supplied evidence.
 

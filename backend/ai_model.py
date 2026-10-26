@@ -52,7 +52,7 @@ from backend.cloudflare_client import generate_text
 
 DEFAULT_TEMPERATURE = 0.2
 
-DEFAULT_MAX_TOKENS = 1000
+DEFAULT_MAX_TOKENS = int(os.getenv("AI_MAX_OUTPUT_TOKENS", "4096"))
 
 DEFAULT_TOP_P = 0.95
 
@@ -280,7 +280,7 @@ You are Orzyn AI, a senior software architect.
 
 Do not output or spend tokens on internal reasoning.
 
-Return only the final repository review.
+Return a complete final repository review. Include every required section and do not stop after the Executive Summary. Keep each section concise if necessary to fit the output limit.
 
 Begin immediately with "Executive Summary".
 
