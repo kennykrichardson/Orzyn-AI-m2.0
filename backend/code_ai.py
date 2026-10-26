@@ -37,6 +37,7 @@ Orzyn AI m2.0
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from typing import Any
 from google import genai
 from google.genai import types
@@ -717,7 +718,8 @@ class CodeInference:
     def __init__(self, model: str | None = None):
         self.config = get_active_model()
         self.provider = self.config.provider
-        self.model = model or self.config.model
+        self.preferred_model = model or self.config.model
+        self.model = self.preferred_model
 
         if self.provider != "gemini":
             raise ValueError(f"Unsupported provider: {self.provider}")
@@ -729,48 +731,80 @@ class CodeInference:
 
         self.client = genai.Client(api_key=GEMINI_API_KEY)
 
-    def generate(
-        self,
-        prompt: str,
-        **kwargs: Any,
-    ) -> CodeAIResponse:
-        """Generate an architectural review using Gemini."""
+    @staticmethod
+    def _is_retryable_provider_error(exc: Exception) -> bool:
+        """Identify temporary capacity, timeout, quota, and model lookup errors."""
+        message = str(exc).lower()
+        return any(token in message for token in (
+            "503", "unavailable", "service_unavailable",
+            "429", "resource_exhausted", "rate limit",
+            "504", "deadline_exceeded", "timed out",
+            "model_not_found", "not found",
+        ))
+
+    def _model_candidates(self) -> list[str]:
+        fallback_setting = os.getenv(
+            "GEMINI_FALLBACK_MODELS",
+            "gemini-3.6-flash,gemini-3.5-flash-lite",
+        )
+        candidates = [self.preferred_model]
+        candidates.extend(
+            item.strip() for item in fallback_setting.split(",") if item.strip()
+        )
+        return list(dict.fromkeys(candidates))
+
+    def generate(self, prompt: str, **kwargs: Any) -> CodeAIResponse:
+        """Generate a code review with model fallback for transient provider failures."""
         max_tokens = kwargs.pop("max_tokens", DEFAULT_MAX_TOKENS)
         temperature = kwargs.pop("temperature", self.config.temperature)
         top_p = kwargs.pop("top_p", self.config.top_p)
+        models = self._model_candidates()
+        failures: list[str] = []
 
-        try:
-            generation_config = types.GenerateContentConfig(
-                system_instruction=PromptBuilder.system_prompt(),
-                temperature=temperature,
-                top_p=top_p,
-                max_output_tokens=max_tokens,
-                http_options=types.HttpOptions(
-                    timeout=int(self.config.timeout * 1000)
-                ),
-            )
-            completion = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=generation_config,
-            )
-        except Exception as exc:
-            raise RuntimeError(f"Gemini code review failed: {exc}") from exc
-
-        response_text = completion.text
-        if not response_text or not response_text.strip():
-            raise RuntimeError(
-                "Gemini returned no text response. "
-                "The response may have been blocked or contain no text."
-            )
-
-        return CodeAIResponse(
-            provider=self.provider,
-            model=self.model,
-            prompt=prompt,
-            response=response_text.strip(),
-            raw=completion,
+        generation_config = types.GenerateContentConfig(
+            system_instruction=PromptBuilder.system_prompt(),
+            temperature=temperature,
+            top_p=top_p,
+            max_output_tokens=max_tokens,
+            http_options=types.HttpOptions(timeout=int(self.config.timeout * 1000)),
         )
+
+        for index, model_name in enumerate(models):
+            try:
+                completion = self.client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=generation_config,
+                )
+                response_text = completion.text
+                if not response_text or not response_text.strip():
+                    raise RuntimeError(
+                        f"Gemini model {model_name} returned no text response. "
+                        "The response may have been blocked or contain no text."
+                    )
+
+                # Keep the primary model unchanged so the next request retries it first.
+                self.model = model_name
+                return CodeAIResponse(
+                    provider=self.provider,
+                    model=model_name,
+                    prompt=prompt,
+                    response=response_text.strip(),
+                    raw=completion,
+                )
+            except Exception as exc:
+                failures.append(f"{model_name}: {exc}")
+                if index == len(models) - 1 or not self._is_retryable_provider_error(exc):
+                    break
+
+        details = " | ".join(failures[-3:])
+        raise RuntimeError(
+            "Gemini code review failed after trying configured models "
+            f"({', '.join(models)}). The service may be overloaded, a model may "
+            "not be available to this API key, or the request may be too large. "
+            f"Provider details: {details}"
+        )
+
 
 
 # ============================================================

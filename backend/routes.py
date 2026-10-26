@@ -81,31 +81,45 @@ def repository_review(
     "/code-review",
     tags=["Code"],
 )
-def code_review(
-    request: ReviewRequest,
-):
-    set_active_repository(
-        request.repository,
-    )
+def code_review(request: ReviewRequest):
+    set_active_repository(request.repository)
 
     try:
         review = review_repository(depth=request.depth)
     except Exception as exc:
-        # Keep provider failures inside FastAPI's handled response path so
-        # CORSMiddleware can attach CORS headers to the error response.
         message = str(exc)
-        if "504" in message or "DEADLINE_EXCEEDED" in message:
+        normalized = message.lower()
+
+        if any(token in normalized for token in ("503", "unavailable", "service_unavailable")):
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    "Gemini is temporarily overloaded. Orzyn tried its configured "
+                    "fallback models, but none completed the review. Retry in a "
+                    "minute. If this persists, check Google AI Studio for model "
+                    "access and service status."
+                ),
+            ) from exc
+        if any(token in normalized for token in ("429", "resource_exhausted", "rate limit")):
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    "Gemini rate or usage limits were reached. Check the API key's "
+                    "quota and billing, then retry after the limit resets."
+                ),
+            ) from exc
+        if any(token in normalized for token in ("504", "deadline_exceeded", "timed out")):
             raise HTTPException(
                 status_code=504,
                 detail=(
-                    "Gemini took too long to complete this code review. "
-                    "Try Medium review, or configure a currently supported "
-                    "Gemini model in the GEMINI_MODEL environment variable."
+                    "Gemini could not finish this review before the deadline, even "
+                    "after model fallback. Try Medium review or reduce the source "
+                    "context sent to the model."
                 ),
             ) from exc
         raise HTTPException(
             status_code=502,
-            detail=f"Code review provider failed: {message[:500]}",
+            detail=f"Code review provider failed: {message[:700]}",
         ) from exc
 
     return asdict(review)

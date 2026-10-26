@@ -185,10 +185,10 @@ ACTIVE_REPOSITORY = (
 
 ACTIVE_MODEL = AIModelConfig(
     provider="gemini",
-    model=os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    model=os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
     temperature=float(os.getenv("GEMINI_TEMPERATURE", "0.2")),
     top_p=float(os.getenv("GEMINI_TOP_P", "0.9")),
-    timeout=int(os.getenv("GEMINI_TIMEOUT", "120")),
+    timeout=int(os.getenv("GEMINI_TIMEOUT", "180")),
 )
 
 GITHUB_HEADERS = {

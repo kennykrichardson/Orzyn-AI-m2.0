@@ -18,14 +18,11 @@ def get_cors_origins() -> list[str]:
     if not origins:
         return list(DEFAULT_CORS_ORIGINS)
 
-    # Origins must be scheme + host only. Normalize whitespace and a common
-    # accidental trailing slash in Render environment variables.
-    normalized = [
-        origin.strip().rstrip("/")
+    return [
+        origin.strip()
         for origin in origins.split(",")
         if origin.strip()
     ]
-    return normalized or list(DEFAULT_CORS_ORIGINS)
 
 
 app = FastAPI(
