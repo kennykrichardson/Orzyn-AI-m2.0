@@ -1,47 +1,84 @@
 <!doctype html>
 <html lang="en">
 <head>
-
+  <!-- Character encoding and responsive layout -->
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#030406" />
 
+  <!-- Google Search Console verification -->
   <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
+    name="google-site-verification"
+    content="wdpJILycECpySr05_4fzGhK5r75ombkyNRIyUVb9jv8"
   />
 
+  <!-- Primary SEO -->
+  <title>Orzyn AI | Developer Intelligence Platform</title>
   <meta
-      name="theme-color"
-      content="#030406"
+    name="description"
+    content="Orzyn AI is a developer intelligence platform combining deterministic repository analysis with large language models to help developers understand and improve their codebases. Created by Kenny Richardson."
   />
-
   <meta
-      name="description"
-      content="AI-powered developer intelligence platform combining deterministic repository analysis with large language models."
+    name="keywords"
+    content="Orzyn AI, developer intelligence, AI code analysis, GitHub repository analysis, code review, FastAPI, React, TypeScript, Kenny Richardson, kennykrichardson, Kenny Richardson Kodipally"
   />
+  <meta name="author" content="Kenny Richardson" />
+  <meta name="creator" content="Kenny Richardson" />
+  <meta name="robots" content="index, follow" />
 
+  <!-- Site icons: place these files in the Vite public/ directory -->
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon.png" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- Open Graph / social sharing -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Orzyn AI" />
+  <meta property="og:title" content="Orzyn AI | Developer Intelligence Platform" />
   <meta
-      name="keywords"
-      content="GitHub, AI, FastAPI, React, TypeScript, Code Review, Repository Analysis"
+    property="og:description"
+    content="Understand your codebase with Orzyn AI, a developer intelligence platform combining deterministic repository analysis and AI."
   />
+  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
 
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Orzyn AI | Developer Intelligence Platform" />
   <meta
-      name="author"
-      content="Kenny Richardson"
+    name="twitter:description"
+    content="AI-powered developer intelligence combining repository analysis with large language models."
   />
+  <meta name="twitter:image" content="/og-image.png" />
 
-  <link
-      rel="icon"
-      type="image/svg+xml"
-      href="/favicon.svg"
-  />
-
-  <title>
-      Orzyn AI • Developer Intelligence
-  </title>
-
+  <!-- Structured data: Orzyn AI and its creator -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Orzyn AI",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "description": "An AI-powered developer intelligence platform combining deterministic repository analysis with large language models.",
+      "creator": {
+        "@type": "Person",
+        "name": "Kenny Richardson",
+        "alternateName": [
+          "kennykrichardson",
+          "Kenny Richardson Kodipally"
+        ],
+        "sameAs": [
+          "https://github.com/kennykrichardson",
+          "https://linkedin.com/in/kennykrichardson"
+        ]
+      }
+    }
+  </script>
 </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>
