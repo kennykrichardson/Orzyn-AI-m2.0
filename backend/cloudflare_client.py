@@ -1,7 +1,6 @@
 """Shared Cloudflare Workers AI client for Orzyn's LLM features."""
 from __future__ import annotations
 
-import os
 from typing import Any
 
 import requests
@@ -48,6 +47,19 @@ def generate_text(
         "temperature": config.temperature if temperature is None else temperature,
         "top_p": config.top_p if top_p is None else top_p,
     }
+
+    # GLM-4.7-Flash enables reasoning by default. On the OpenAI-compatible
+    # Workers AI endpoint, disable it so the model returns its user-facing
+    # answer in message.content instead of spending the output budget on
+    # reasoning and returning content=None.
+    if "glm-4.7-flash" in model_name.lower():
+        payload["chat_template_kwargs"] = {
+            "enable_thinking": False,
+            "clear_thinking": True,
+        }
+        # Cloudflare documents null as the explicit disable-reasoning value.
+        payload["reasoning_effort"] = None
+
     timeout = max(10, int(config.timeout))
     try:
         response = requests.post(
@@ -92,9 +104,21 @@ def generate_text(
     # The OpenAI-compatible endpoint returns choices[0].message.content.
     choices = data.get("choices", []) if isinstance(data, dict) else []
     content = None
+    finish_reason = None
     if choices:
-        message = choices[0].get("message", {}) or {}
+        choice = choices[0] or {}
+        message = choice.get("message", {}) or {}
         content = message.get("content")
+        finish_reason = choice.get("finish_reason")
+
+        # Some Workers AI model responses represent text content as typed
+        # text blocks rather than a single string.
+        if isinstance(content, list):
+            content = "".join(
+                part.get("text", "")
+                for part in content
+                if isinstance(part, dict) and part.get("type") == "text"
+            )
     # Be tolerant of Workers AI envelope responses if Cloudflare changes formats.
     if not content and isinstance(data, dict):
         result = data.get("result", {})
@@ -102,7 +126,14 @@ def generate_text(
             content = result.get("response") or result.get("output_text")
 
     if not isinstance(content, str) or not content.strip():
+        detail = (
+            f" Finish reason: {finish_reason}."
+            if finish_reason
+            else ""
+        )
         raise CloudflareInferenceError(
-            f"Cloudflare Workers AI returned no text for {model_name}. Response: {str(data)[:800]}"
+            f"Cloudflare Workers AI returned no user-facing text for {model_name}.{detail} "
+            f"The response may contain reasoning without a final answer. "
+            f"Response: {str(data)[:800]}"
         )
     return content.strip(), model_name, data
